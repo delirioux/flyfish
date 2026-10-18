@@ -8,6 +8,11 @@ One piece on the M-VAVE FM-1: Chopin's Étude in C major, Op. 10 No. 1, the "Wat
 shape it, practise it and vary it. Built on [Tuna](https://github.com/delirioux/tuna) and
 [Felucca](docs/FELUCCA.md).
 
+## Why this piece
+
+Because of the film *Youri*. It opens with this étude, and Flyfish began the evening after watching it: to have
+that music in a pocket synth, to play it, to learn it, to make it fall like water.
+
 > **Version 0.1, in development: not yet tried on an FM-1.** Built for fun and with no warranty: Felucca's or
 > Tuna's installer, or the official V15, takes the FM-1 back.
 
