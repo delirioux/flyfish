@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Flyfish's firmware package for the FM-1, built on GitHub's Linux runners: JieLi's toolchain and three files of the
+# JieLi AC79 SDK (Apache-2.0) come from JieLi's own servers, as BUILDING.md describes. The package is the run's
+# artifact "flyfish-firmware" (Actions > the run > Artifacts): install it with the web installer's "Install a test
+# build" (Tuna's site has one: any package of Felucca's loader for the FM-1). A push to main or dev builds it, and
+# the host tests run first.
+name: Firmware
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true            # firmware/engines: Felucca-Engines (MIT)
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python packages (the UI font and icons are rasterised at build time)
+        run: pip install Pillow fonttools
+
+      - name: JieLi toolchain (clang 4.0.1 for pi32v2)
+        run: sh tools/get_toolchain.sh
+
+      - name: JieLi AC79 SDK (three of its files go into the package)
+        run: |
+          git clone --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
+              https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$HOME/fw-AC79_AIoT_SDK"
+
+      - name: Host tests (the player, the screen, the étude's table)
+        run: sh tests/ff_tests.sh
+
+      - name: Build Flyfish
+        run: FELUCCA_FLYFISH=1 ./build.sh
+
+      - name: No soft-float routines (Flyfish's floats run on the FPU; a routine like __mulsf3 here crashed an FM-1 running Tuna)
+        run: |
+          if grep -E '\s__(add|sub|mul|div|neg)[sd]f3$|\s__(fix|float|extend|trunc)\w*[sd]f\w*$|\s__(eq|ne|lt|le|gt|ge|unord)[sd]f2$' build/felucca.sym; then
+            echo "soft-float routines in the firmware: build with -mcpu=r3 -mfprev1 (tools/build.py)"; exit 1
+          fi
+          echo "none"
+
+      - name: Sizes (each object's code, constants and RAM, its largest symbols; also when the link fails)
+        if: always()
+        run: |
+          NM=$(find "$HOME/.jieli/toolchain/" -name "*nm" -type f -perm -u+x | head -1)
+          echo "nm: $NM"
+          for o in build/felucca.o build/ff_*.o build/tuna_*.o; do
+            [ -f "$o" ] || continue
+            "$NM" --size-sort -S "$o" > "$o.sizes" || continue
+            python3 - "$o" <<'PY'
+          import sys
+          tot = {}
+          rows = []
+          for line in open(sys.argv[1] + ".sizes"):
+              f = line.split()
+              if len(f) == 4:
+                  k = {"t": "code", "r": "const", "d": "data", "b": "bss", "s": "bss"}.get(f[2].lower(), f[2])
+                  tot[k] = tot.get(k, 0) + int(f[1], 16)
+                  rows.append((int(f[1], 16), k, f[3]))
+          print("==", sys.argv[1], "  ".join(f"{k} {v}" for k, v in sorted(tot.items())))
+          for n, k, name in sorted(rows)[-15:][::-1]:
+              print(f"   {n:7d} {k:5s} {name}")
+          PY
+          done
+
+      - name: Name the package
+        run: |
+          mkdir -p dist
+          FV=$(sed -n 's/^#define FF_VERSION "\([^"]*\)".*/\1/p' firmware/src/ff_version.h)
+          DEV=$([ "$GITHUB_REF_NAME" = main ] || echo "-$GITHUB_REF_NAME")
+          cp build/felucca.fwsc "dist/flyfish-$FV$DEV-${GITHUB_SHA::7}.fwsc"
+          cp LICENSE LICENSING.md dist/
+          cp -r LICENSES dist/
+          mkdir -p dist/debug                 # for a crash screen: its PC in the symbols and the disassembly
+          cp build/felucca.sym dist/debug/ && gzip -c build/felucca.dis > dist/debug/felucca.dis.gz
+          ls -l dist dist/debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flyfish-firmware
+          path: dist/
