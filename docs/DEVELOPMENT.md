@@ -61,9 +61,13 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   lowest held note). Only the held bass keeps its key down, to the next pedal change: it always sounds. The pedal's
   ring comes from Tuna's resonator, its strings tuned to the bass and harmony of each pedal (from the score,
   `FF_RESO`).
-- **A deep bass.** The held bass a step louder than the figures, the left hand at 100 and through a darker filter
-  than the right, its Steinway notes kept 3.1 s (a two-bar whole note at 176 lasts 2.7 s). Measured on the host
-  render: the band below 160 Hz 6 dB stronger, the bass sounding in 98 % of the quarter seconds (was 88 %).
+- **One piano, both hands on one track.** With a track for each hand, a key struck by one hand while the other's
+  still rang (the left hand's C4 under the right's, a sixteenth apart) sounded twice: two strings for one key, a
+  doubled bass. On one track Felucca restarts the voice of the same note, as a piano's key. RIGHT and LEFT are the
+  hands' velocities; WIDTH spreads the voices left and right. The keys (playing along) keep their own track.
+- **A deep bass.** The held bass well above the figures, RIGHT at 75 and LEFT at 100, its Steinway notes kept 3.1 s
+  (a two-bar whole note at 176 lasts 2.7 s). Measured on the host render: the bass below 160 Hz 2 dB nearer the rest
+  than in 0.2, sounding in 99 % of the quarter seconds (was 88 %); no note twice, no voice stolen.
 - **A Steinway.** GRAND is a Steinway D: Princeton's bitKlavier Grand (Piano Bar mic image, CC BY 4.0), 13 notes
   from C1 to C7 every six semitones (a note never moves more than three semitones; Felucca's Kawai: five notes, six),
   velocity layer 12 of 16, kept by register: 3.1 s in the deep bass down to 0.7 s at the top, where a Steinway's high notes

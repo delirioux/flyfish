@@ -2,8 +2,10 @@
 /* FLYFISH's sounds on Felucca's engines, and the cards that set a track: shared by the firmware (ff_fw.c) and
  * the host render (tests/ff_felucca.c), so both play the same. Needs core.h (track_t, P_*, the song) first.
  *
- * Tracks: 1 the right hand, 2 the left, 3 the FM-1's keys (playing along), 4 the click (the DRUM engine's wood
- * blocks). The three music tracks take the SOUND card's engine and factory preset. */
+ * Tracks: 1 the piano, both hands (FFS_TRACK), 3 the FM-1's keys (playing along), 4 the click (the DRUM engine's
+ * wood blocks); 2 stays silent. Both hands on one track, as on one instrument: a key one hand strikes while the other's
+ * rings is struck again (Felucca restarts the voice of the same note) instead of sounding twice; RIGHT and LEFT are
+ * the hands' velocities (ff_player.c), WIDTH the voices' spread. */
 #ifndef FF_SOUNDS_H
 #define FF_SOUNDS_H
 
@@ -25,16 +27,20 @@ static const ffs_sound FFS_SOUND[FF_SOUNDS] = {
 /* the reverb spaces: SIZE and DAMP on Felucca's ROOM model, as Tuna's */
 static const uint8_t FFS_SPACE[FF_SPACE_COUNT][2] = {{71, 48}, {86, 45}, {97, 30}};
 
+/* the track a hand plays on */
+static inline uint32_t ffs_track_of(int hand) { return hand == FF_HAND_L ? 0u : (uint32_t)hand & 3u; }
+
 static inline int16_t ffs_clamp(int v) { return (int16_t)(v < 0 ? 0 : v > 127 ? 127 : v); }
 
 /* a music track's settings over its preset: base_dec / base_rel are the preset's own DEC and REL */
 static inline void ffs_track(track_t *t, const ff_settings *s, int hand, int16_t base_dec, int16_t base_rel)
 {
-    int lvl = hand == FF_HAND_R ? s->right : hand == FF_HAND_L ? s->left : 85;
+    int lvl = hand == FF_HAND_KEYS ? 85 : 100;      /* (the hands' own levels: their velocities, ff_player.c) */
     t->p[P_VOICE] = V_POLY;
     t->p[P_LEVEL] = ffs_clamp(lvl * 96 / 100);          /* (the loudest bars just under the master limiter) */
     t->p[P_REV] = ffs_clamp(s->reverb * 127 / 100);
-    t->p[P_PAN] = ffs_clamp(64 + (hand == FF_HAND_R ? 1 : hand == FF_HAND_L ? -1 : 0) * s->width * 28 / 100);
+    t->p[P_PAN] = 64;
+    t->p[P_SPRD] = ffs_clamp(hand == FF_HAND_KEYS ? 0 : s->width * 64 / 100);   /* WIDTH: the voices left and right */
     /* DECAY: the preset's own decay and release, scaled 0.4x .. 2x around 60 */
     int f = s->decay < 60 ? 40 + s->decay : 100 + (s->decay - 60) * 100 / 40;   /* percent */
     t->p[P_DEC] = ffs_clamp(base_dec * f / 100);
@@ -56,8 +62,7 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int hand, int16_t
         t->p[P_ITYPE] = 5;                       /* IT_CRUSH */
         t->p[P_IA] = 127;                        /* 16 bits */
         t->p[P_IB] = 127;                        /* the full rate */
-        t->p[P_IC] = ffs_clamp(56 + s->bright * 70 / 100 - (hand == FF_HAND_L ? 12 : 0));   /* LPF (the left hand
-                                                         * darker: its bass rounder and deeper) */
+        t->p[P_IC] = ffs_clamp(56 + s->bright * 70 / 100);   /* LPF */
         t->p[P_IMIX] = 127;
     }
 }

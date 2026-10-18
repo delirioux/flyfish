@@ -26,7 +26,7 @@ void ff_defaults(ff_settings *s)
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;
     s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->form = FF_FORM_ONCE;
-    s->right = 80; s->left = 100; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
+    s->right = 75; s->left = 100; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0;
 }
 
@@ -217,11 +217,12 @@ static int velocity(const ff_settings *s, const ff_shown *e)
         if (FF_TOP[e->step / 32] == e->step)
             v += 0.1f * (float)s->accent / 100.0f;                  /* the wave's crest */
     } else {
-        v += e->len >= 8 ? 0.14f : -0.04f;                          /* the held bass: weight under the waves */
+        v += e->len >= 8 ? 0.22f : -0.04f;                          /* the held bass: weight under the waves */
     }
     v = 0.72f + (v - 0.72f) * ((float)s->touch / 60.0f);
     v *= 1.0f + sinf((float)e->step * 12.9898f + (float)e->note) * 0.5f * 0.04f * (float)s->rubato / 100.0f;
     v = clampf(v, 0.15f, 1.0f);
+    v *= (float)(e->hand == FF_HAND_L ? s->left : s->right) / 100.0f;   /* RIGHT, LEFT: the hands share a track */
     return clampi((int)(v * 127.0f + 0.5f), 1, 127);
 }
 

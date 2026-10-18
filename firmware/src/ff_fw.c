@@ -11,7 +11,7 @@
  *   the main loop (main.c -> ff_frame, ff_input): the panel into the controls (the audio ISR held off while one
  *     acts), the SOUND card into the tracks' engines (a preset load is the main loop's), the mix, the LEDs, the
  *     settings saved while stopped, the screen.
- * Tracks: 1 the right hand, 2 the left, 3 the keys (playing along), 4 the click (ff_sounds.h). */
+ * Tracks: 1 the piano (both hands), 3 the keys (playing along), 4 the click (ff_sounds.h). */
 #include "ff_player.h"
 #include "ff_ui.h"
 #include "ff_ui.c"
@@ -35,15 +35,15 @@ static volatile uint8_t ff_last_rh = 0xFF;                   /* the right hand's
 static void ff_sound(void *ctx, const ff_event *e)
 {
     (void)ctx;
-    uint32_t tr = e->hand & 3u;
+    uint32_t tr = ffs_track_of(e->hand), h = e->hand & 3u;
     if (e->on) {
         trk_note_on(&trk[tr], e->note, e->vel);
-        if (tr == 0u) ff_last_rh = e->note;
+        if (h == FF_HAND_R) ff_last_rh = e->note;
     } else if (tr != 3u) {
         trk_note_off(&trk[tr], e->note);                     /* (a click plays on through its decay) */
     }
-    if (tr < 3u) {                                           /* MIDI out: the right hand on 1, the left 2, the keys 3 */
-        uint32_t st = (e->on ? 0x90u : 0x80u) | tr, cin = st >> 4;
+    if (h < 3u) {                                            /* MIDI out: the right hand on 1, the left 2, the keys 3 */
+        uint32_t st = (e->on ? 0x90u : 0x80u) | h, cin = st >> 4;
         midi_out_event(cin | st << 8 | (uint32_t)e->note << 16 | (uint32_t)(e->on ? e->vel : 0u) << 24);
     }
 }
