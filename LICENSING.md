@@ -4,7 +4,7 @@ Flyfish is a fork of [Tuna](https://github.com/delirioux/tuna), itself a fork of
 [Felucca](https://github.com/hugelton/Felucca): GPL-3.0-only, as they are. Its own files (`firmware/src/ff_*`,
 `tests/ff_*`, `tools/ff_*`, `data/`, `docs/`) are Copyright (C) 2026 delirioux, GPL-3.0-only; the resonator and the
 maths (`firmware/src/tuna_reso.*`, `tuna_libm.c`, `tuna_sys.h`) are Tuna's. Chopin's notes are in the public domain
-(below). Everything else is Felucca's, as Felucca licenses it:
+and the piano is a Steinway D under CC BY 4.0 (below): GPL-3.0 allows it, and the package carries its credit. Everything else is Felucca's, as Felucca licenses it:
 
 ## Felucca licensing
 
@@ -65,7 +65,7 @@ All by Hügelton Instruments (Leo Kuroshita), in this tree:
 | What | Licence | Where |
 | --- | --- | --- |
 | Inter Tight font by The Inter Project Authors: the UI text, rasterised into the firmware at build time (`tools/gen_aa_font.py`; the generated tables are not offered as a font, and the font declares no Reserved Font Name) | SIL OFL 1.1 | `assets/fonts/InterTight[wght].ttf`, `LICENSES/OFL-InterTight.txt` (also `assets/fonts/OFL.txt`) |
-| Instrument samples (Versilian Studios VSCO-2 Community Edition, VCSL): the SAMPLE sets, also the SLICE engine's PIANO (the PIANO set's middle C) | CC0 1.0 | `assets/samples-cc0/`, provenance in `ATTRIBUTION.txt` there |
+| The piano (Flyfish: in place of Felucca's CC0 sets): a Steinway D, the bitKlavier Grand Sample Library, Piano Bar mic image, by Daniel Trueman, Princeton University (<https://doi.org/10.34770/r75s-9j74>); 13 notes, cut, mono, resampled and ADPCM-encoded into the firmware | CC BY 4.0 | `assets/samples-steinway/`, changes and credit in `ATTRIBUTION.txt` there, `LICENSES/CC-BY-4.0-Steinway.txt` |
 | DaisySP by Electrosmith, Corp and Emilie Gillet (<https://github.com/electro-smith/DaisySP>): the PHYS engine's modal and string models and the resonator, ported to fixed point | MIT | `firmware/src/phys_dsp.c`, `LICENSES/MIT-DaisySP.txt` |
 | Rings by Emilie Gillet (<https://github.com/pichenettes/eurorack>): the PHYS engine's sympathetic strings, ported to fixed point | MIT | `firmware/src/phys_symp.c`, `LICENSES/MIT-Rings.txt` |
 | Frédéric Chopin, Étude in C major, Op. 10 No. 1 (1830-32): the notes, pitches and rhythms only, checked against a public-domain score; no recording, MIDI performance or edition's dynamics | Public domain | `data/op10no1.txt` (and `firmware/src/ff_etude.inc`, made from it) |

@@ -4,6 +4,9 @@
 
 - **Frédéric Chopin**: the Étude in C major, Op. 10 No. 1 (1830-32), public domain. The notes in `data/op10no1.txt`
   are its pitches and rhythms, checked against a public-domain score
+- **The piano**: a Steinway D from the [bitKlavier Grand Sample Library](https://doi.org/10.34770/r75s-9j74) (Piano Bar mic
+  image) by Daniel Trueman, Princeton University, [CC BY 4.0](LICENSES/CC-BY-4.0-Steinway.txt): 13 notes, cut and
+  encoded for the FM-1 ([what was changed](assets/samples-steinway/ATTRIBUTION.txt))
 - **[Tuna](https://github.com/delirioux/tuna)** (delirioux, GPL-3.0-only): the frame Flyfish's screen is drawn in,
   the firmware glue it is shaped after, the resonator (`tuna_reso`) and the single-precision maths (`tuna_libm`)
 - **Felucca** (below): the hardware layer, the engines, the effects, the drawing, the installer's package format

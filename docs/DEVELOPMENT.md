@@ -58,8 +58,12 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
 - **The pedal: dampers and a resonator.** Felucca has 8 voices for everything; a pedalled arpeggio wants twenty.
   Notes keep sounding to the next pedal change and the oldest give way; the pedal's ring comes from Tuna's
   resonator, its strings tuned to the bass and harmony of each pedal (from the score, `FF_RESO`).
-- **A longer piano.** Without Tuna's flute and sax (their indexes are now aliases of the piano), each piano note
-  keeps 2.2 s instead of Felucca's 0.75 s.
+- **A Steinway.** GRAND is a Steinway D: Princeton's bitKlavier Grand (Piano Bar mic image, CC BY 4.0), 13 notes
+  from C1 to C7 every six semitones (a note never moves more than three semitones; Felucca's Kawai: five notes, six),
+  velocity layer 12 of 16, kept by register: 2.4 s in the bass down to 0.7 s at the top, where a Steinway's high notes
+  have died away anyway. 248 KB of ADPCM (Felucca's sets: 143 KB). Without Tuna's flute and sax, their indexes are
+  aliases of the piano. The second layer (v8) is downloaded but not used: Felucca's SAMPLE engine has no velocity
+  layers; the matrix's VEL -> AMP does the dynamics.
 - **The variations keep Chopin's harmony.** Each half bar's own notes give the pool; a figure walks it on the right
   hand's rhythm. The random numbers are mulberry32, as in the browser simulator.
 - **The keys only play.** FREE plays along, TAP makes the player the rhythm, WAIT holds the music for the right
@@ -80,11 +84,8 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
 
 1. **On the FM-1.** First CI build (the flash and RAM report), install on `dev`, check: the splash, the keys and
    knobs, the timing at 176, the CPU with the resonator, the settings surviving a power cycle.
-2. **Steinway.** The [bitKlavier Grand](https://datacommons.princeton.edu/discovery/catalog/doi-10-34770-r75s-9j74)
-   (Princeton): a new Steinway D, CC BY 4.0 (compatible with GPL-3.0; credit required), 16 velocity layers, a note
-   every minor third. Only through Globus, so by hand: one velocity layer of C2, F#2, C3, F#3, C4, F#4, C5, F#5,
-   C6, F#6 and C7 (eleven files, a zone every six semitones instead of every twelve), cut to fit the flash the
-   first CI build reports free. Then a second velocity layer if it fits.
+2. **Steinway, done in 0.2.** Next, if the flash allows: longer notes, a second velocity layer (the SAMPLE
+   engine would need velocity zones), the set's release resonance and pedal noises.
 3. **The browser.** Flyfish in Felucca's browser emulator (`web/emu`, as Tuna's Try page), and a site with the
    installer.
 4. **The simulator in step.** The browser simulator predates the firmware: it lacks the fifteen re-struck bass

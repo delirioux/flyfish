@@ -100,10 +100,14 @@ SLC_GRID, SLC_AUTO = 128, 32                # eng_slice.c slc_src_t
 ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75),
        "oneshot": (0, 127, 127, 70), "sus": (12, 80, 120, 60)}
 
-# PIANO's notes cut to 2.2 s (Felucca: 0.75 s; Flyfish has the flash of FLUTE and SAX for it: the étude's
-# pedalled arpeggios ring), faded out over the last SET_FADE s
+# Flyfish: PIANO is a Steinway D (the bitKlavier Grand, Princeton, CC BY 4.0: assets/samples-steinway, its
+# ATTRIBUTION.txt), 13 notes from C1 to C7 every six semitones, in place of Felucca's 5-note Kawai (CC0). Each note is
+# cut by its register (SET_KEEP_BY_ROOT: below the root, that many seconds; high notes die away sooner), faded out
+# over the last SET_FADE s
+SET_DIR = {"PIANO": SRC / "assets" / "samples-steinway"}
 SET_KEEP = {"PIANO": 2.2}
-SET_FADE = {"PIANO": 0.4}
+SET_KEEP_BY_ROOT = {"PIANO": ((48, 2.4), (60, 2.0), (72, 1.4), (84, 1.0), (999, 0.7))}
+SET_FADE = {"PIANO": 0.3}
 
 _wavs = {}
 
@@ -145,7 +149,7 @@ def octave_conv(files):
 
 def cc0_entries(setname, kind):
     """-> [(file name, int16 samples at TR, loop or None, root)]"""
-    files = sorted((CC0 / setname).glob("*.wav"))
+    files = sorted(SET_DIR.get(setname, CC0 / setname).glob("*.wav"))
     out = []
     if kind != "kit":
         conv = octave_conv(files)
@@ -165,6 +169,10 @@ def cc0_entries(setname, kind):
             root = hz_to_midi(detect_hz(x, sr))
         x = resample(x, sr, TR)
         keep = SET_KEEP.get(setname) or {"oneshot": 1.0, "sus": 0.95, "kit": 0.6}[kind]
+        for below, secs in SET_KEEP_BY_ROOT.get(setname, ()):
+            if root < below:
+                keep = secs
+                break
         x = x[:int(keep * TR)]
         n = len(x)
         if kind == "sus":                            # crossfaded sustain loop in the steady part
@@ -447,9 +455,9 @@ def input_key(have_cc0):
 
 def main(out):
     subprocess.run([sys.executable, str(Path(__file__).with_name("gen_waves.py")), str(GENDIR)], check=True)
-    have_cc0 = CC0.exists() and any(CC0.glob("*/*.wav"))
+    have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k != "alias")   # (Flyfish: the Steinway)
     if not have_cc0:
-        print("samples: CC0 library not fetched (tools/fetch_cc0.py) - no SAMPLE sets")
+        print("samples: the sample library is missing (assets/samples-steinway) - no SAMPLE sets")
     key = input_key(have_cc0)
     try:
         ck, summary, text = CACHE.read_text().split("\n", 2)

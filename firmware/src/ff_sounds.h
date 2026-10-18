@@ -12,7 +12,7 @@
 enum { FFS_ANALOG = 0, FFS_PHASE = 2, FFS_SAMPLE = 4, FFS_PHYS = 9, FFS_FM6 = 12 };
 typedef struct { uint8_t engine, preset; } ffs_sound;   /* (the names: ff_player.c ff_sound_name, in this order) */
 static const ffs_sound FFS_SOUND[FF_SOUNDS] = {
-    {FFS_SAMPLE, 0},    /* GRAND: the piano sample (CC0: a Kawai grand, VCSL) */
+    {FFS_SAMPLE, 0},    /* GRAND: the piano set: a Steinway D (bitKlavier Grand, CC BY 4.0) */
     {FFS_FM6, 0},       /* TINE EP */
     {FFS_PHYS, 8},      /* HARP */
     {FFS_PHASE, 4},     /* CELESTA: PHASE's BELL */

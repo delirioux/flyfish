@@ -1,0 +1,14 @@
+Flyfish's piano: a Steinway D, from the bitKlavier Grand Sample Library (Piano Bar mic image).
+
+  Daniel Trueman (bitKlavier), Princeton University, recorded January 2021 in Taplin Auditorium.
+  bitKlavier Grand Sample Library: Piano Bar Mic Image. Princeton University Data Commons.
+  https://doi.org/10.34770/r75s-9j74
+  Licence: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  https://creativecommons.org/licenses/by/4.0/
+
+Changes made for Flyfish: 13 notes (C1, F#1, C2 ... F#6, C7) of velocity layer 12 of 16, from the 44.1 kHz / 16-bit
+release; each mixed to mono and cut to its first 3.2 s here (00_Steinway_<note>_v12.wav), then by tools/gen_samples.py
+cut by register (2.4 s in the bass to 0.7 s at the top), faded out, resampled to 22.05 kHz, normalised and IMA ADPCM
+encoded into the firmware.
+
+  00..12_Steinway_<note>_v12.wav  <-  bitKlavierGrand_PianoBar_44k16b/<note>v12.wav

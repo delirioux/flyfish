@@ -26,7 +26,7 @@ shape it, practise it and vary it. Built on [Tuna](https://github.com/delirioux/
   RISE, WAVE, ALBERTI, BROKEN, TREMOLO or SPARKLE, over one to four octaves, a seed for each. Move it to another
   KEY, play it in MINOR, DORIAN or LYDIAN, change the BASS, and let FORM EVOLVE: a new variation every round.
 
-Eight sounds on Felucca's engines: GRAND (the piano sample), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
+Eight sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
 SINE KEY; three spaces of reverb; ten colours.
 
 ## The controls
@@ -66,5 +66,5 @@ As Tuna (see [BUILDING.md](BUILDING.md)), with `FELUCCA_FLYFISH=1 ./build.sh`. G
 ## Credits and licence
 
 GPL-3.0-only. Flyfish by delirioux, written with Claude; a fork of Tuna (delirioux), a fork of Felucca by Leo
-Kuroshita, Hügelton Instruments. Chopin's notes are in the public domain; the piano sample is Versilian Studios'
-VCSL Kawai grand (CC0). See [CREDITS.md](CREDITS.md) and [LICENSING.md](LICENSING.md).
+Kuroshita, Hügelton Instruments. Chopin's notes are in the public domain; the piano is a Steinway D from Princeton's
+bitKlavier Grand Sample Library by Daniel Trueman (CC BY 4.0). See [CREDITS.md](CREDITS.md) and [LICENSING.md](LICENSING.md).
