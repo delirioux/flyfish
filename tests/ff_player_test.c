@@ -186,14 +186,24 @@ int main(void)
     ns = ff_notes_in(&P, 0, 1, c, 600);
     CHECK(ns == 0, "BASS NONE: no held bass (%d)", ns);
 
-    /* 6. the pedal: DRY ends notes sooner than SCORE */
+    /* 6. the pedal: only the held bass keeps its key down to the pedal change (bar 3 here, where F1 comes); the
+     * figures let go at once (they ring on in the track's release) */
     reset();
-    P.s.pedal = FF_PED_DRY;
-    ff_play(&P, true); run(4); ff_play(&P, false);
-    int dry_poly = max_poly;
+    ff_play(&P, true);
+    run(2.2f);                                                 /* bar 2: C2 still held (C3 was struck again on the
+                                                                * next sixteenth, as a pianist's key), the figures not */
+    int held_bass = sounding[1][36], held_figs = 0;
+    for (int k = 0; k < 128; ++k) held_figs += sounding[0][k];
+    CHECK(held_bass == 1, "SCORE: the bass C2 held into bar 2 (%d)", held_bass);
+    CHECK(held_figs <= 1, "SCORE: the figures let go at once (%d held)", held_figs);
+    run(1.5f);
+    CHECK(sounding[1][36] == 0, "SCORE: the bass let go at the pedal change");
+    ff_play(&P, false);
     reset();
-    ff_play(&P, true); run(4); ff_play(&P, false);
-    CHECK(max_poly > dry_poly, "the pedal holds more notes (%d) than DRY (%d)", max_poly, dry_poly);
+    P.s.pedal = FF_PED_WASH;
+    ff_play(&P, true); run(3.6f);
+    CHECK(sounding[1][36] == 1, "WASH: the bass held through the pedal change of bar 3");
+    ff_play(&P, false);
     {
         int notes[6];
         int n = ff_reso_notes(&P, notes);

@@ -55,13 +55,19 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   levels sit the loudest bars just under Felucca's master limiter: above it the dynamics were flattened.
 - **Rubato breathes with the waves**: pushing up, a breath at the crest, easing at the wave's end; the last two
   bars broaden; the fermata holds.
-- **The pedal: dampers and a resonator.** Felucca has 8 voices for everything; a pedalled arpeggio wants twenty.
-  Notes keep sounding to the next pedal change and the oldest give way; the pedal's ring comes from Tuna's
-  resonator, its strings tuned to the bass and harmony of each pedal (from the score, `FF_RESO`).
+- **The pedal: a long release, a held bass and a resonator.** Felucca has 8 voices for everything; a pedalled
+  arpeggio wants twenty. The figures let go of their keys at once and ring on in a long release (the pedal's REL),
+  so when the voices run out a released figure gives way (voice.c takes released voices first, and never a track's
+  lowest held note). Only the held bass keeps its key down, to the next pedal change: it always sounds. The pedal's
+  ring comes from Tuna's resonator, its strings tuned to the bass and harmony of each pedal (from the score,
+  `FF_RESO`).
+- **A deep bass.** The held bass a step louder than the figures, the left hand at 100 and through a darker filter
+  than the right, its Steinway notes kept 3.1 s (a two-bar whole note at 176 lasts 2.7 s). Measured on the host
+  render: the band below 160 Hz 6 dB stronger, the bass sounding in 98 % of the quarter seconds (was 88 %).
 - **A Steinway.** GRAND is a Steinway D: Princeton's bitKlavier Grand (Piano Bar mic image, CC BY 4.0), 13 notes
   from C1 to C7 every six semitones (a note never moves more than three semitones; Felucca's Kawai: five notes, six),
-  velocity layer 12 of 16, kept by register: 2.4 s in the bass down to 0.7 s at the top, where a Steinway's high notes
-  have died away anyway. 248 KB of ADPCM (Felucca's sets: 143 KB). Without Tuna's flute and sax, their indexes are
+  velocity layer 12 of 16, kept by register: 3.1 s in the deep bass down to 0.7 s at the top, where a Steinway's high notes
+  have died away anyway. 271 KB of ADPCM (Felucca's sets: 143 KB). Without Tuna's flute and sax, their indexes are
   aliases of the piano. The second layer (v8) is downloaded but not used: Felucca's SAMPLE engine has no velocity
   layers; the matrix's VEL -> AMP does the dynamics.
 - **The variations keep Chopin's harmony.** Each half bar's own notes give the pool; a figure walks it on the right

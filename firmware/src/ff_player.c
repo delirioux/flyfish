@@ -26,7 +26,7 @@ void ff_defaults(ff_settings *s)
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;
     s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->form = FF_FORM_ONCE;
-    s->right = 80; s->left = 85; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
+    s->right = 80; s->left = 100; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0;
 }
 
@@ -217,7 +217,7 @@ static int velocity(const ff_settings *s, const ff_shown *e)
         if (FF_TOP[e->step / 32] == e->step)
             v += 0.1f * (float)s->accent / 100.0f;                  /* the wave's crest */
     } else {
-        v += e->len >= 8 ? 0.06f : -0.04f;
+        v += e->len >= 8 ? 0.14f : -0.04f;                          /* the held bass: weight under the waves */
     }
     v = 0.72f + (v - 0.72f) * ((float)s->touch / 60.0f);
     v *= 1.0f + sinf((float)e->step * 12.9898f + (float)e->note) * 0.5f * 0.04f * (float)s->rubato / 100.0f;
@@ -257,7 +257,10 @@ static int pedal_index(int st)
 static float release_after(const ff_settings *s, const ff_shown *e, float d)
 {
     float own = (float)e->len * d * 0.97f;
-    if (s->pedal == FF_PED_DRY)
+    /* only the held bass keeps its key down to the pedal change: the figures let go at once and ring on in their
+     * release (ff_sounds.h: the pedal's REL), so when Felucca's 8 voices run out it is a released figure that gives
+     * way, never the bass (voice.c voice_victim: released voices first) */
+    if (s->pedal == FF_PED_DRY || !(e->hand == FF_HAND_L && e->len >= 8))
         return own;
     int grid;
     if (s->pedal == FF_PED_WASH) {

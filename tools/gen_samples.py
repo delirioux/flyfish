@@ -102,11 +102,12 @@ ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75
 
 # Flyfish: PIANO is a Steinway D (the bitKlavier Grand, Princeton, CC BY 4.0: assets/samples-steinway, its
 # ATTRIBUTION.txt), 13 notes from C1 to C7 every six semitones, in place of Felucca's 5-note Kawai (CC0). Each note is
-# cut by its register (SET_KEEP_BY_ROOT: below the root, that many seconds; high notes die away sooner), faded out
+# cut by its register (SET_KEEP_BY_ROOT: below the root, that many seconds; the deep bass longest, high notes die away sooner), faded out
 # over the last SET_FADE s
 SET_DIR = {"PIANO": SRC / "assets" / "samples-steinway"}
 SET_KEEP = {"PIANO": 2.2}
-SET_KEEP_BY_ROOT = {"PIANO": ((48, 2.4), (60, 2.0), (72, 1.4), (84, 1.0), (999, 0.7))}
+SET_KEEP_BY_ROOT = {"PIANO": ((42, 3.1), (48, 2.4), (60, 2.0), (72, 1.4), (84, 1.0), (999, 0.7))}   # (the deep bass
+# holds through its two-bar whole notes)
 SET_FADE = {"PIANO": 0.3}
 
 _wavs = {}

@@ -32,13 +32,18 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int hand, int16_t
 {
     int lvl = hand == FF_HAND_R ? s->right : hand == FF_HAND_L ? s->left : 85;
     t->p[P_VOICE] = V_POLY;
-    t->p[P_LEVEL] = ffs_clamp(lvl * 104 / 100);         /* (the loudest bars just under the master limiter) */
+    t->p[P_LEVEL] = ffs_clamp(lvl * 96 / 100);          /* (the loudest bars just under the master limiter) */
     t->p[P_REV] = ffs_clamp(s->reverb * 127 / 100);
     t->p[P_PAN] = ffs_clamp(64 + (hand == FF_HAND_R ? 1 : hand == FF_HAND_L ? -1 : 0) * s->width * 28 / 100);
     /* DECAY: the preset's own decay and release, scaled 0.4x .. 2x around 60 */
     int f = s->decay < 60 ? 40 + s->decay : 100 + (s->decay - 60) * 100 / 40;   /* percent */
     t->p[P_DEC] = ffs_clamp(base_dec * f / 100);
     t->p[P_REL] = ffs_clamp(base_rel * f / 100);
+    /* the pedal: the figures let go of their keys at once (ff_player.c release_after) and ring on in a long release,
+     * as under a pedal; HALF shorter, DRY the preset's own */
+    static const uint8_t PED_REL[FF_PED_COUNT] = {104, 88, 0, 118};
+    if (PED_REL[s->pedal % FF_PED_COUNT] && hand != FF_HAND_KEYS)
+        t->p[P_REL] = ffs_clamp(PED_REL[s->pedal % FF_PED_COUNT] * f / 100);
     /* the dynamics: the matrix's last slot, VEL -> AMP (the SAMPLE engine has no velocity of its own; the FM and
      * physical engines have theirs, so less there) */
     t->p[P_M4SRC] = 3;                           /* MS_VEL */
@@ -51,7 +56,8 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int hand, int16_t
         t->p[P_ITYPE] = 5;                       /* IT_CRUSH */
         t->p[P_IA] = 127;                        /* 16 bits */
         t->p[P_IB] = 127;                        /* the full rate */
-        t->p[P_IC] = ffs_clamp(56 + s->bright * 70 / 100);   /* LPF */
+        t->p[P_IC] = ffs_clamp(56 + s->bright * 70 / 100 - (hand == FF_HAND_L ? 12 : 0));   /* LPF (the left hand
+                                                         * darker: its bass rounder and deeper) */
         t->p[P_IMIX] = 127;
     }
 }
