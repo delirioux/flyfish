@@ -66,8 +66,8 @@ int main(int argc, char **argv)
     P.s.rubato = (uint8_t)env_int("RUBATO", 35);
     P.s.bright = (uint8_t)env_int("BRIGHT", 60);
     P.s.decay = (uint8_t)env_int("DECAY", 60);
-    P.s.reverb = (uint8_t)env_int("REVERB", 30);
-    P.s.space = (uint8_t)env_int("SPACE", 1);
+    P.s.reverb = (uint8_t)env_int("REVERB", 20);
+    P.s.space = (uint8_t)env_int("SPACE", 2);
     if (getenv("BARS")) {
         int a = 1, b = 2;
         sscanf(getenv("BARS"), "%d,%d", &a, &b);

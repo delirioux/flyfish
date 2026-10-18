@@ -26,7 +26,7 @@ void ff_defaults(ff_settings *s)
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;
     s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->form = FF_FORM_ONCE;
-    s->right = 80; s->left = 85; s->reverb = 30; s->space = FF_SPACE_HALL;
+    s->right = 80; s->left = 85; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0;
 }
 

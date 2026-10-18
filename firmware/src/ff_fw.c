@@ -93,6 +93,10 @@ static void ff_settings_load(void)
         ff_defaults(&s);                                     /* (a shorter, older record: the new fields their defaults) */
         uint32_t k = r.size < sizeof s ? r.size : sizeof s;
         memcpy(&s, &r.s, k);
+        if (r.ver < 2 && s.space == FF_SPACE_HALL && s.reverb == 30) {   /* 0.1's default space: 0.2's (CATHEDRAL 20) */
+            s.space = FF_SPACE_CATHEDRAL;
+            s.reverb = 20;
+        }
         ff_settings_fix(&s);
         ff_pl.s = s;
     }
@@ -105,7 +109,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 1;
+    r.ver = 2;                                               /* (2: since 0.2, CATHEDRAL 20 the default) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif

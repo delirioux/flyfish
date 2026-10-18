@@ -32,7 +32,7 @@ that music in a pocket synth, to play it, to learn it, to make it fall like wate
   KEY, play it in MINOR, DORIAN or LYDIAN, change the BASS, and let FORM EVOLVE: a new variation every round.
 
 Eight sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
-SINE KEY; three spaces of reverb; ten colours.
+SINE KEY; three spaces of reverb (CATHEDRAL at 20 % to start); ten colours.
 
 ## The controls
 

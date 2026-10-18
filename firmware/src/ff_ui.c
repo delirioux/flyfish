@@ -107,7 +107,8 @@ static const char *const FN_FIGURE[] = {"RISE", "WAVE", "ALBERTI", "BROKEN", "TR
 static const char *const FN_SCALE[] = {"SCORE", "MINOR", "DORIAN", "LYDIAN"};
 static const char *const FN_BASS[] = {"OCTAVE", "SINGLE", "DRONE", "NONE"};
 static const char *const FN_FORM[] = {"ONCE", "REPEAT", "EVOLVE"};
-static const char *const FN_SPACE[] = {"ROOM", "HALL", "CATHEDRAL"};
+static const char *const FN_SPACE[] = {"ROOM", "HALL", "CHURCH"};           /* (the card: CATHEDRAL does not fit, as Tuna) */
+static const char *const FN_SPACE_LONG[] = {"ROOM", "HALL", "CATHEDRAL"};   /* (the MIX panel) */
 static const char *const FN_STYLE[] = {"FLAT", "LINE"};
 #define C_NUM(l, f) {l, FS_(f), FC_NUM, 0, 100, 5, 0}
 #define C_LIST(l, f, n) {l, FS_(f), FC_LIST, 0, (int16_t)(sizeof n / sizeof n[0]) - 1, 1, n}
@@ -508,7 +509,7 @@ static void fu_panel_space(ff_ui *u)
 {
     const ff_player *p = u->pl;
     char t[16], a[8];
-    cv_text_on(10, 4, &AF_M, FN_SPACE[p->s.space % FF_SPACE_COUNT], T_TEXT, T_SURF);
+    cv_text_on(10, 4, &AF_M, FN_SPACE_LONG[p->s.space % FF_SPACE_COUNT], T_TEXT, T_SURF);
     fu_cpy(t, "SEND ", sizeof t);
     fu_fmt_int(a, p->s.reverb);
     fu_cat(t, a, sizeof t);
