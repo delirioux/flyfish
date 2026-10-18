@@ -11,7 +11,7 @@
  *   the main loop (main.c -> ff_frame, ff_input): the panel into the controls (the audio ISR held off while one
  *     acts), the SOUND card into the tracks' engines (a preset load is the main loop's), the mix, the LEDs, the
  *     settings saved while stopped, the screen.
- * Tracks: 1 the piano (both hands), 3 the keys (playing along), 4 the click (ff_sounds.h). */
+ * Tracks: 1 the piano's treble, 2 its bass (split at middle C), 3 the keys, 4 the click (ff_sounds.h). */
 #include "ff_player.h"
 #include "ff_ui.h"
 #include "ff_ui.c"
@@ -35,7 +35,7 @@ static volatile uint8_t ff_last_rh = 0xFF;                   /* the right hand's
 static void ff_sound(void *ctx, const ff_event *e)
 {
     (void)ctx;
-    uint32_t tr = ffs_track_of(e->hand), h = e->hand & 3u;
+    uint32_t tr = ffs_track_of(e->hand, e->note), h = e->hand & 3u;
     if (e->on) {
         trk_note_on(&trk[tr], e->note, e->vel);
         if (h == FF_HAND_R) ff_last_rh = e->note;

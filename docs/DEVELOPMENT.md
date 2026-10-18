@@ -61,10 +61,13 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   lowest held note). Only the held bass keeps its key down, to the next pedal change: it always sounds. The pedal's
   ring comes from Tuna's resonator, its strings tuned to the bass and harmony of each pedal (from the score,
   `FF_RESO`).
-- **One piano, both hands on one track.** With a track for each hand, a key struck by one hand while the other's
-  still rang (the left hand's C4 under the right's, a sixteenth apart) sounded twice: two strings for one key, a
-  doubled bass. On one track Felucca restarts the voice of the same note, as a piano's key. RIGHT and LEFT are the
-  hands' velocities; WIDTH spreads the voices left and right. The keys (playing along) keep their own track.
+- **One piano, split by pitch, in stereo.** With a track for each hand, a key struck by one hand while the other's
+  still rang (the left hand's C4 under the right's, a sixteenth apart) sounded twice: two strings for one key. The
+  piano is now split by pitch instead: below middle C one track, panned left; from C4 up another, panned right, as
+  heard from the bench. A note always plays on one track, so Felucca restarts its voice when it is struck again, and
+  the arpeggios sweep from left to right and back. WIDTH sets how far apart; RIGHT and LEFT are the hands'
+  velocities. (Felucca's PAN is -64 .. 63 around 0: 0.1 and 0.2 put 64 and up in it, everything hard right.)
+  The samples stay mono: stereo would take twice the flash.
 - **A deep bass.** The held bass well above the figures, RIGHT at 75 and LEFT at 100, its Steinway notes kept 3.1 s
   (a two-bar whole note at 176 lasts 2.7 s). Measured on the host render: the bass below 160 Hz 2 dB nearer the rest
   than in 0.2, sounding in 99 % of the quarter seconds (was 88 %); no note twice, no voice stolen.

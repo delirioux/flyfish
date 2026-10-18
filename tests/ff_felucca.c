@@ -24,7 +24,7 @@ static int16_t base_dec[3], base_rel[3];
 static void sound(void *ctx, const ff_event *e)
 {
     (void)ctx;
-    uint32_t tr = ffs_track_of(e->hand);
+    uint32_t tr = ffs_track_of(e->hand, e->note);
     if (e->on) { trk_note_on(&trk[tr], e->note, e->vel); n_on++; }
     else if (tr != 3u) { trk_note_off(&trk[tr], e->note); n_off++; }
 }
