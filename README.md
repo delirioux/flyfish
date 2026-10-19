@@ -94,8 +94,9 @@ of the score's markings (f, cresc., dim., the hairpins, the accents, Ped.), not 
 ## Building
 
 As Tuna (see [BUILDING.md](BUILDING.md)), with `FELUCCA_FLYFISH=1 ./build.sh`. GitHub Actions builds every push to
-`main` and `dev`; a push to `main` also publishes the site with the installer (`web/ff_make_site.py`; the repository
-needs Settings > Pages > Source: GitHub Actions). `sh tests/ff_tests.sh` runs the host tests;
+`main` and `dev` and publishes the site with the installer (`web/ff_make_site.py`), marked a test build when it comes
+from `dev`. The repository needs Settings > Pages > Source: GitHub Actions, and `dev` allowed under Settings >
+Environments > github-pages. `sh tests/ff_tests.sh` runs the host tests;
 `sh tests/ff_felucca.sh OUTDIR` renders the étude through Felucca's engines to a WAV. Design notes:
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 

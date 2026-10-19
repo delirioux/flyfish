@@ -153,7 +153,7 @@ async function write(img, product, doneKey) {
     const pkg = new Uint8Array(await r.arrayBuffer());
     if (productOf(pkg) !== meta.product) { sayK("badpkg"); return; }
     image = logicalImage(pkg);
-    say(`Flyfish ${meta.version}, on Felucca ${meta.felucca}`);
+    say(`Flyfish ${meta.version}, on Felucca ${meta.felucca}` + (/\(dev-/.test(meta.version) ? ": a test build from dev, not yet released" : ""));
     lock(false);
   } catch (e) { sayK("loadfail", e.message); }
 })();

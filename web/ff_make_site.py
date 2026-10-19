@@ -40,6 +40,8 @@ def ff_version():
 
 def main(pkg, build, out):
     version = f"{ff_version()} ({build})"
+    test = build.startswith("dev-")                 # a build from dev: said so on both pages
+    test_note = ('<p style="color:#ff8c64">A test build from the dev branch: not yet released.</p>' if test else "")
     pkg, out = Path(pkg), Path(out)
     raw = pkg.read_bytes()
     product = product_of(raw)
@@ -97,7 +99,7 @@ def main(pkg, build, out):
 <img src="flyfish-logo.png" alt="Flyfish">
 <h1>Waterfall Flying Fish</h1>
 <p>One piece on the M-VAVE FM-1: Chopin's Étude in C major, Op. 10 No. 1. Flyfish plays it, lets you shape it,
-practise it and move it, on a sampled Steinway and Felucca's sound.</p>
+practise it and move it, on a sampled Steinway and Felucca's sound.</p>{test_note}
 <a class="b" href="install/">Install on the FM-1</a>
 <small>Flyfish {version}, on Felucca {felucca_version()} · GPL-3.0 · <a href="https://github.com/delirioux/flyfish">Source</a> ·
 Felucca by Leo Kuroshita, Hügelton Instruments · for Youri</small>

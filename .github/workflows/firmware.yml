@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Flyfish's firmware package for the FM-1, built on GitHub's Linux runners: JieLi's toolchain and three files of the
 # JieLi AC79 SDK (Apache-2.0) come from JieLi's own servers, as BUILDING.md describes. The package is the run's
-# artifact "flyfish-firmware" (Actions > the run > Artifacts). A push to main also makes the site on GitHub Pages
-# (web/ff_make_site.py): the start page and the web installer with the package; it needs Settings > Pages > Source:
-# GitHub Actions. A push to dev builds the package only: install it with the installer's "Install a test build".
-# The host tests run first.
+# artifact "flyfish-firmware" (Actions > the run > Artifacts). A push to main or dev also makes the site on GitHub
+# Pages (web/ff_make_site.py): the start page and the web installer with the package, marked a test build when it
+# comes from dev. It needs Settings > Pages > Source: GitHub Actions, and dev allowed to deploy (Settings >
+# Environments > github-pages > deployment branches). The host tests run first.
 name: Firmware
 
 on:
@@ -92,17 +92,14 @@ jobs:
           name: flyfish-firmware
           path: dist/
 
-      - name: The site, on main only (the start page and the web installer with this package)
-        if: github.ref == 'refs/heads/main'
-        run: python3 web/ff_make_site.py build/felucca.fwsc "${GITHUB_SHA::7}" _site
+      - name: The site (the start page and the web installer with this package; from dev, a test build)
+        run: python3 web/ff_make_site.py build/felucca.fwsc "$([ "$GITHUB_REF_NAME" = main ] || echo "$GITHUB_REF_NAME-")${GITHUB_SHA::7}" _site
 
       - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main'
         with:
           path: _site
 
   pages:
-    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     permissions:
