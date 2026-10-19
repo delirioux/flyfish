@@ -92,6 +92,22 @@ jobs:
           name: flyfish-firmware
           path: dist/
 
+      - name: Clang's WASI sysroot (for Flyfish in the browser; npm's @yowasp/clang carries one)
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true            # (the site goes out without it)
+        run: |
+          sudo apt-get install -y lld
+          mkdir -p "$HOME/wasi" && cd "$HOME/wasi"
+          npm pack @yowasp/clang
+          mkdir -p pkg sys && tar -xzf yowasp-clang-*.tgz -C pkg && tar -xf pkg/package/gen/llvm-resources.tar -C sys
+
+      - name: Flyfish in the browser (the same firmware, WebAssembly)
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true            # (the site goes out without it)
+        run: |
+          WASI_SYSROOT="$HOME/wasi/sys" sh web/emu/ff_build.sh
+          node web/emu/ff_emu_test.mjs build/ff_emu/flyfish.wasm
+
       - name: The site, on main only (the start page and the web installer with this package)
         if: github.ref == 'refs/heads/main'
         run: python3 web/ff_make_site.py build/felucca.fwsc "$([ "$GITHUB_REF_NAME" = main ] || echo "$GITHUB_REF_NAME-")${GITHUB_SHA::7}" _site

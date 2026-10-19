@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Make Flyfish's site (GitHub Pages, .github/workflows/firmware.yml):
 
-  index.html                  the start page: the logo, Install, Source
+  index.html                  the start page: the logo, Install, Try, Source
   install/index.html          web/flyfish_installer.html, self-contained (fm1pkg.js and fm1ota.js inlined, as
                               Felucca's web/make_site.py does for its installer)
   firmware/flyfish-X.Y-VER.fwsc  the package (+ LICENSE, LICENSING.md, LICENSES/: it holds JieLi SDK files under
                               Apache-2.0, see LICENSING.md)
+  try/                        the browser build (build/ff_emu, web/emu/ff_build.sh), when it was built
   flyfish-logo.png
 
   web/ff_make_site.py build/felucca.fwsc VERSION OUT_DIR
@@ -79,6 +80,14 @@ def main(pkg, build, out):
     for doc in ("LICENSE", "LICENSING.md"):
         shutil.copy(ROOT / doc, fw / doc)
     shutil.copy(ROOT / "docs/flyfish-logo.png", out / "flyfish-logo.png")
+    emu = ROOT / "build/ff_emu"
+    try_link = ""
+    if (emu / "flyfish.wasm").exists():
+        dst = out / "try"
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(emu, dst, ignore=shutil.ignore_patterns("obj", "shim"))
+        try_link = '<a class="b" href="try/">Try it in the browser</a>'
     (out / "index.html").write_text(f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Waterfall Flying Fish</title><link rel="icon" href="flyfish-logo.png">
@@ -100,13 +109,13 @@ def main(pkg, build, out):
 <h1>Waterfall Flying Fish</h1>
 <p>One piece on the M-VAVE FM-1: Chopin's Étude in C major, Op. 10 No. 1. Flyfish plays it, lets you shape it,
 practise it and move it, on a sampled Steinway and Felucca's sound.</p>{test_note}
-<a class="b" href="install/">Install on the FM-1</a>
+<a class="b" href="install/">Install on the FM-1</a>{try_link}
 <small>Flyfish {version}, on Felucca {felucca_version()} · GPL-3.0 · <a href="https://github.com/delirioux/flyfish">Source</a> ·
 Felucca by Leo Kuroshita, Hügelton Instruments · for Youri</small>
 </main></body></html>
 """, encoding="utf-8")
     print(f"site: {out}: install ({len(html)} B), firmware/{name} ({len(raw)} B, {product})"
-          )
+          + (", try" if try_link else ""))
 
 
 if __name__ == "__main__":

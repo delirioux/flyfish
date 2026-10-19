@@ -25,6 +25,10 @@ the FM-1 with a USB data cable and press Install (allow MIDI when the browser as
 the browser and writes it over USB-MIDI, as Felucca's installer does. Flyfish keeps its settings and practice chart
 in Felucca's first two song slots: back up anything you made in Felucca first.
 
+Or **try it in the browser** first: [delirioux.github.io/flyfish/try](https://delirioux.github.io/flyfish/try/) runs
+the same firmware, compiled to WebAssembly on Felucca's browser emulator (Chrome, Edge or Firefox; the computer
+keyboard plays the keys).
+
 Test builds: every push to `dev` leaves a package in the GitHub run's artifact `flyfish-firmware`; the installer's
 "Install a test build" takes it. From a terminal: `python3 tools/fm1_install.py flyfish-X.Y.fwsc`.
 
@@ -96,7 +100,8 @@ of the score's markings (f, cresc., dim., the hairpins, the accents, Ped.), not 
 As Tuna (see [BUILDING.md](BUILDING.md)), with `FELUCCA_FLYFISH=1 ./build.sh`. GitHub Actions builds every push to
 `main` and `dev`; a push to `main` also publishes the site with the installer (`web/ff_make_site.py`; the repository
 needs Settings > Pages > Source: GitHub Actions). A `dev` build installs with the installer's "Install a test build". `sh tests/ff_tests.sh` runs the host tests;
-`sh tests/ff_felucca.sh OUTDIR` renders the étude through Felucca's engines to a WAV. Design notes:
+`sh tests/ff_felucca.sh OUTDIR` renders the étude through Felucca's engines to a WAV;
+`web/emu/ff_build.sh` builds the browser version (Emscripten, or clang with a WASI sysroot). Design notes:
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Credits and licence
