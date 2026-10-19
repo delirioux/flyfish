@@ -275,7 +275,7 @@ int main(void)
         }
         long step = on2 - on1, over = off1 - on2;
         if (lg == 0) CHECK(over <= 0 && over > -step / 8, "LEGATO 0: the notes just touch (%ld)", over);
-        else CHECK(over > step * 3 / 4 && over < step * 5 / 4, "LEGATO 100: a sixteenth's overlap (%ld of %ld)", over, step);
+        else CHECK(over > step * 5 / 2 && over < step * 7 / 2, "LEGATO 100: three sixteenths' overlap (%ld of %ld)", over, step);
     }
 
     printf("ff_player: %d checks, %d failed\n", checks, fails);

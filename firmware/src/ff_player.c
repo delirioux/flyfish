@@ -261,11 +261,13 @@ static int pedal_index(int st)
 }
 
 /* when a note's damper falls: its own length, held on by the pedal to the next change (frames from now). Chopin
- * writes legato over the figures: each finger lets go only after the next key goes down, LEGATO % of a sixteenth
- * later (0: the notes just touch; 25, the default: a pianist's overlap; the held bass keeps its own length) */
+ * writes legato over the figures: each finger lets go only after the next key goes down: LEGATO 0 the notes just
+ * touch, 100 three sixteenths later (a finger pedal: four notes sounding; 25, the default, three quarters of one).
+ * Under the pedal the figures ring on anyway: LEGATO is heard best with PEDAL DRY or HALF. The held bass keeps its
+ * own length */
 static float release_after(const ff_settings *s, const ff_shown *e, float d)
 {
-    float own = (float)e->len * d * (e->len < 8 ? 1.0f + (float)s->legato / (100.0f * (float)e->len) : 0.97f);
+    float own = (float)e->len * d * (e->len < 8 ? 1.0f + 3.0f * (float)s->legato / (100.0f * (float)e->len) : 0.97f);
     /* only the held bass keeps its key down to the pedal change: the figures let go at once and ring on in their
      * release (ff_sounds.h: the pedal's REL), so when Felucca's 8 voices run out it is a released figure that gives
      * way, never the bass (voice.c voice_victim: released voices first) */
