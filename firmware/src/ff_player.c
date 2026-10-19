@@ -27,7 +27,7 @@ void ff_defaults(ff_settings *s)
     s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->rounds = 0;   /* INF */
     s->right = 75; s->left = 100; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
-    s->bpm = 176; s->palette = 3; s->style = 0;
+    s->bpm = 176; s->palette = 3; s->style = 0; s->legato = 25;
 }
 
 void ff_settings_fix(ff_settings *s)
@@ -47,6 +47,7 @@ void ff_settings_fix(ff_settings *s)
     s->left = (uint8_t)clampi(s->left, 0, 100); s->reverb = (uint8_t)clampi(s->reverb, 0, 100);
     s->space = (uint8_t)(s->space % FF_SPACE_COUNT); s->bpm = (uint8_t)clampi(s->bpm, 40, 240);
     s->palette = (uint8_t)(s->palette % 10u); s->style = (uint8_t)(s->style % 2u);
+    s->legato = (uint8_t)clampi(s->legato, 0, 100);
 }
 
 /* ---- random numbers: mulberry32 (the browser simulator's generator too) ------------------------------------------------- */
@@ -260,12 +261,11 @@ static int pedal_index(int st)
 }
 
 /* when a note's damper falls: its own length, held on by the pedal to the next change (frames from now). Chopin
- * writes legato over the figures: each finger lets go only as the next key goes down, a quarter of a sixteenth
- * later (an overlap, as a pianist's legato has; the held bass keeps its own length) */
-#define FF_LEGATO 1.25f
+ * writes legato over the figures: each finger lets go only after the next key goes down, LEGATO % of a sixteenth
+ * later (0: the notes just touch; 25, the default: a pianist's overlap; the held bass keeps its own length) */
 static float release_after(const ff_settings *s, const ff_shown *e, float d)
 {
-    float own = (float)e->len * d * (e->len < 8 ? FF_LEGATO : 0.97f);
+    float own = (float)e->len * d * (e->len < 8 ? 1.0f + (float)s->legato / (100.0f * (float)e->len) : 0.97f);
     /* only the held bass keeps its key down to the pedal change: the figures let go at once and ring on in their
      * release (ff_sounds.h: the pedal's REL), so when Felucca's 8 voices run out it is a released figure that gives
      * way, never the bass (voice.c voice_victim: released voices first) */

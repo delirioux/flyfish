@@ -53,6 +53,7 @@ typedef struct {
     uint8_t right, left, reverb, space;            /* MIX */
     uint8_t bpm;                                   /* SELECT: 40..240 */
     uint8_t palette, style;                        /* MENU */
+    uint8_t legato;                                /* FINGERS (FX): 0 the notes just touch .. 100 a sixteenth's overlap */
 } ff_settings;
 
 typedef struct {

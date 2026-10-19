@@ -258,6 +258,26 @@ int main(void)
     CHECK(P.s.seed == 17 + P.round - 1, "INF with VARY: a new seed each round (%d)", P.s.seed);
     ff_play(&P, false);
 
+    /* 8. LEGATO: a figure's note lets go after the next one starts (25: a quarter of a sixteenth), at 0 as it does */
+    for (int lg = 0; lg <= 100; lg += 100) {
+        reset();
+        P.s.rounds = 1; P.s.pedal = FF_PED_DRY; P.s.legato = (uint8_t)lg;
+        P.s.from = 1; P.s.to = 1;
+        ff_play(&P, true);
+        run(1.5f);
+        ff_play(&P, false);
+        long on1 = -1, on2 = -1, off1 = -1; int n1 = -1;
+        for (int i = 0; i < nrec; ++i) {
+            if (rec[i].hand != 0) continue;
+            if (rec[i].on && on1 < 0) { on1 = rec[i].t; n1 = rec[i].note; continue; }
+            if (rec[i].on && on1 >= 0 && on2 < 0) on2 = rec[i].t;
+            if (!rec[i].on && rec[i].note == n1 && off1 < 0) off1 = rec[i].t;
+        }
+        long step = on2 - on1, over = off1 - on2;
+        if (lg == 0) CHECK(over <= 0 && over > -step / 8, "LEGATO 0: the notes just touch (%ld)", over);
+        else CHECK(over > step * 3 / 4 && over < step * 5 / 4, "LEGATO 100: a sixteenth's overlap (%ld of %ld)", over, step);
+    }
+
     printf("ff_player: %d checks, %d failed\n", checks, fails);
     return fails ? 1 : 0;
 }

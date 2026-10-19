@@ -51,6 +51,7 @@ SINE KEY; three spaces of reverb (CATHEDRAL at 20 % to start); ten colours.
 | SEQ | practice: SPEED FROM TO YOU; again: MODE RAMP CLICK COUNT |
 | ARP | variations: VARY FIGURE SPREAD SEED; again: KEY MODE BASS ROUNDS |
 | GLO | mix: RIGHT LEFT REVERB SPACE |
+| FX | fingers: LEGATO (how far each note of the figures overlaps the next) |
 | keys | music only: playing along, tapping, finding the note |
 
 MIDI out: the right hand on channel 1, the left on 2, the keys on 3. The settings save themselves while stopped.

@@ -125,10 +125,11 @@ static const fu_cdef FU_CARDS[FU_PAGES][4] = {
     [FU_PG_VAR2] = {{"KEY", FS_(key), FC_KEY, -6, 6, 1, 0}, C_LIST("MODE", scale, FN_SCALE), C_LIST("BASS", bass, FN_BASS),
                     {"ROUNDS", FS_(rounds), FC_ROUNDS, 0, FF_ROUNDS_MAX, 1, 0}},
     [FU_PG_MIX] = {C_NUM("RIGHT", right), C_NUM("LEFT", left), C_NUM("REVERB", reverb), C_LIST("SPACE", space, FN_SPACE)},
+    [FU_PG_FINGERS] = {C_NUM("LEGATO", legato), C_OFF, C_OFF, C_OFF},
     [FU_PG_MENU] = {{"COLOR", FS_(palette), FC_PAL, 0, 9, 1, 0}, C_LIST("STYLE", style, FN_STYLE), C_OFF, C_OFF},
 };
 static const char *const FU_PAGE_NAMES[FU_PAGES] = {"HOME", "SOUND", "PRACTICE", "PRACTICE 2", "VARIATIONS",
-                                                    "VARIATIONS 2", "MIX", "MENU"};
+                                                    "VARIATIONS 2", "MIX", "MENU", "FINGERS"};
 const char *fu_page_name(int page) { return page >= 0 && page < FU_PAGES ? FU_PAGE_NAMES[page] : ""; }
 
 static int fu_get(const ff_ui *u, const fu_cdef *c)
@@ -547,7 +548,7 @@ static void fu_draw_panel(ff_ui *u)
         fu_panel_list("SOUND", names, FF_SOUNDS, u->pl->s.sound, true);
     } else {
         switch (u->page) {
-        case FU_PG_HOME: if (u->pl->playing || fu_drops_alive(u)) fu_panel_waterfall(u); else fu_panel_stopped(u); break;
+        case FU_PG_HOME: case FU_PG_FINGERS: if (u->pl->playing || fu_drops_alive(u)) fu_panel_waterfall(u); else fu_panel_stopped(u); break;
         case FU_PG_SOUND: {
             static const char *names[FF_SOUNDS];
             for (int i = 0; i < FF_SOUNDS; ++i) names[i] = ff_sound_name(i);
@@ -725,6 +726,7 @@ void fu_button(ff_ui *u, int b, bool down)
     }
     case FU_B_EDIT: fu_goto_page(u, FU_PG_SOUND); break;
     case FU_B_GLO: fu_goto_page(u, FU_PG_MIX); break;
+    case FU_B_FX: fu_goto_page(u, FU_PG_FINGERS); break;
     case FU_B_SEQ: fu_goto_page(u, u->page == FU_PG_PRACTICE ? FU_PG_PRACTICE2 : FU_PG_PRACTICE); break;
     case FU_B_ARP: fu_goto_page(u, u->page == FU_PG_VAR ? FU_PG_VAR2 : FU_PG_VAR); break;
     case FU_B_SAVE: fu_msg(u, p->playing ? "STOP TO SAVE" : "SAVED"); u->changed = true; break;
