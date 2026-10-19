@@ -246,7 +246,7 @@ int main(int argc, char **argv)
     CHECK(pl.s.interp == FF_STYLE_ROMANTIC && pl.s.bpm == 160 && pl.s.rubato == 70, "STYLE ROMANTIC: its tempo and rubato");
     fu_knob(&ui, FU_K3, 1);
     fu_knob(&ui, FU_K4, 1);
-    CHECK(pl.s.soft && pl.s.tuning == FF_TUNE_WERCKMEISTER, "SOFT, WERCKMEISTER");
+    CHECK(pl.s.soft && pl.s.tuning == FF_TUNE_KIRNBERGER, "SOFT, KIRNBERGER");
     shot("piano");
     all_palettes("piano");
     fu_knob(&ui, FU_K2, 1);

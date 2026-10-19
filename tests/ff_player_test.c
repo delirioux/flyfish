@@ -293,9 +293,9 @@ int main(void)
         CHECK(s.interp == FF_STYLE_NOCTURNE && s.bpm == 112 && s.pedal == FF_PED_WASH, "NOCTURNE: slow, washed");
         s.tuning = FF_TUNE_EQUAL;
         CHECK(ff_temper_ct(&s, 4) == 0.0f, "EQUAL: E at 0 cents");
-        s.tuning = FF_TUNE_WERCKMEISTER;
+        s.tuning = FF_TUNE_KIRNBERGER;
         float c = ff_temper_ct(&s, 0), e = ff_temper_ct(&s, 4), a = ff_temper_ct(&s, 9);
-        CHECK(a == 0.0f && c > 11.0f && c < 12.5f && e > 1.5f && e < 2.5f, "WERCKMEISTER, tuned to A: C %+.1f E %+.1f", c, e);
+        CHECK(a == 0.0f && c > 9.8f && c < 10.8f && e > -3.9f && e < -2.9f, "KIRNBERGER, tuned to A: C %+.1f E %+.1f", c, e);
         s.pitch = FF_PITCH_430;
         CHECK(ff_pitch_ct(&s) < -39.0f && ff_pitch_ct(&s) > -41.0f, "A = 430: %.1f cents", ff_pitch_ct(&s));
         reset();

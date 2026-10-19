@@ -148,6 +148,8 @@ static void ff_settings_load(void)
         }
         if (r.ver < 5 && s.touch == 70)                     /* 0.3: TOUCH 40, the dips less deep */
             s.touch = 40;
+        if (r.ver == 5 && s.tuning)                          /* (0.4's first build had Werckmeister III at 1) */
+            s.tuning = (uint8_t)(s.tuning == 1 ? FF_TUNE_EQUAL : s.tuning - 1);
         ff_settings_fix(&s);
         ff_pl.s = s;
     }
@@ -184,7 +186,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 5;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25; 5: TOUCH 40) */
+    r.ver = 6;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25; 5: TOUCH 40; 6: no Werckmeister) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif

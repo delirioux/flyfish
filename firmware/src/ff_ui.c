@@ -114,8 +114,8 @@ static const char *const FN_RHYTHM_LONG[] = {"EVEN", "LONG-SHORT", "SHORT-LONG",
 static const char *const FN_SHOW[] = {"BEST", "MISSES"};
 static const char *const FN_INTERP[] = {"OWN", "CLASSIC", "ROMAN.", "VIRT.", "NOCT."};          /* (the card) */
 static const char *const FN_INTERP_LONG[] = {"YOUR OWN", "CLASSIC", "ROMANTIC", "VIRTUOSO", "NOCTURNE"};
-static const char *const FN_TUNING[] = {"EQUAL", "WERCK", "KIRNB", "VALLOT"};
-static const char *const FN_TUNING_LONG[] = {"EQUAL TEMPERAMENT", "WERCKMEISTER III", "KIRNBERGER III", "VALLOTTI"};
+static const char *const FN_TUNING[] = {"EQUAL", "KIRNB", "VALLOT"};
+static const char *const FN_TUNING_LONG[] = {"EQUAL TEMPERAMENT", "KIRNBERGER III", "VALLOTTI"};
 static const char *const FN_VIEW[] = {"WATER", "SCORE"};
 static const char *const FN_PITCH[] = {"440", "435", "430"};
 #define C_NUM(l, f) {l, FS_(f), FC_NUM, 0, 100, 5, 0}

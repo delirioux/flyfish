@@ -34,7 +34,7 @@ that music in a pocket synth, to play it, to learn it, to make it fall like wate
   change the BASS, and let it go ROUNDS: 1 to 16 times or INF (endless), through a seam you will not hear (bar 48
   runs into bar 1 as it runs into the recapitulation, which is bar 1 again).
 - **Chopin's piano.** A STYLE sets a whole reading at once: CLASSIC, ROMANTIC, VIRTUOSO or NOCTURNE. TUNING plays it
-  in equal temperament or in the well temperaments of Chopin's time (Werckmeister III, Kirnberger III, Vallotti), at
+  in equal temperament or, for contrast, in two 18th-century well temperaments (Kirnberger III, Vallotti), at
   A = 440, 435 (the diapason normal of 1859) or 430 Hz; SOFT is the una corda; PLEYEL voices the Steinway after the
   piano Chopin played. The screen names the harmony in Roman numerals (V7/V, viio7/ii), and can show the bar as a
   score (MENU: VIEW).

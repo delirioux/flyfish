@@ -17,8 +17,8 @@
  *               ROUNDS (how many times the piece goes round before it ends: 1 as written, up to 16, or INF)
  *   PIANO       STYLE (a reading: CLASSIC, ROMANTIC, VIRTUOSO, NOCTURNE set tempo, rubato, touch, accent, pedal
  *               and legato at once; OWN once any of them is changed), LEGATO, SOFT (una corda: softer, darker),
- *               TUNING (EQUAL, or the well temperaments of Chopin's time: Werckmeister III, Kirnberger III,
- *               Vallotti; tuned to A)
+ *               TUNING (EQUAL, or one of two older well temperaments, Kirnberger III and Vallotti, as a
+ *               contrast; tuned to A)
  *   MENU        COLOR, LOOK, VIEW (HOME's panel: the WATERFALL or the SCORE), PITCH (A = 440, 435 (the
  *               diapason normal of 1859) or 430 Hz)
  *
@@ -46,7 +46,7 @@ enum { FF_SCALE_SCORE, FF_SCALE_MINOR, FF_SCALE_DORIAN, FF_SCALE_LYDIAN, FF_SCAL
 enum { FF_BASS_OCTAVE, FF_BASS_SINGLE, FF_BASS_DRONE, FF_BASS_NONE, FF_BASS_COUNT };
 enum { FF_RHY_EVEN, FF_RHY_LONG_SHORT, FF_RHY_SHORT_LONG, FF_RHY_ACC2, FF_RHY_ACC3, FF_RHY_ACC4, FF_RHY_COUNT };
 enum { FF_STYLE_OWN, FF_STYLE_CLASSIC, FF_STYLE_ROMANTIC, FF_STYLE_VIRTUOSO, FF_STYLE_NOCTURNE, FF_STYLE_COUNT };
-enum { FF_TUNE_EQUAL, FF_TUNE_WERCKMEISTER, FF_TUNE_KIRNBERGER, FF_TUNE_VALLOTTI, FF_TUNE_COUNT };
+enum { FF_TUNE_EQUAL, FF_TUNE_KIRNBERGER, FF_TUNE_VALLOTTI, FF_TUNE_COUNT };
 enum { FF_PITCH_440, FF_PITCH_435, FF_PITCH_430, FF_PITCH_COUNT };
 enum { FF_VIEW_WATERFALL, FF_VIEW_SCORE, FF_VIEW_COUNT };
 #define FF_BARS_N 80                               /* (79 bars; the progress arrays) */

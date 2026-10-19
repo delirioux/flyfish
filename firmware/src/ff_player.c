@@ -75,7 +75,6 @@ void ff_style_apply(ff_settings *s, int style)
 /* ---- TUNING and PITCH: cents from equal temperament for C .. B, C at 0 (tuned to A in ff_temper_ct) ------------- */
 static const float TEMPER[FF_TUNE_COUNT][12] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, -9.78f, -7.82f, -5.87f, -9.78f, -1.96f, -11.73f, -3.91f, -7.82f, -11.73f, -3.91f, -7.82f},   /* Werckmeister III */
     {0, -9.78f, -6.84f, -5.87f, -13.69f, -1.96f, -9.78f, -3.42f, -7.82f, -10.27f, -3.91f, -11.73f},  /* Kirnberger III */
     {0, -5.87f, -3.91f, -1.96f, -7.82f, 1.96f, -7.82f, -1.96f, -3.91f, -5.87f, 0, -9.78f},          /* Vallotti */
 };

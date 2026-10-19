@@ -89,12 +89,14 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
 - **The progress chart.** Only WAIT with a hand left out counts: a bar played from its line to its last sixteenth
   with no wrong key keeps the best SPEED it was played at; each wrong key counts against its bar. Its own record
   ("FFP1") in Felucca's second project object, saved when the player stops (never while playing).
-- **Temperaments as cents, tuned to A.** Werckmeister III, Kirnberger III and Vallotti as offsets from equal
+- **Temperaments as cents, tuned to A.** EQUAL is the default. Kirnberger III and Vallotti (18th-century well
+  temperaments, a contrast rather than a claim about Chopin's tuner; 0.4's first build also had Werckmeister III, a
+  Baroque one, removed as out of place) as offsets from equal
   temperament, shifted so A stays at 0 (the PITCH stays the pitch). They reach each voice as its `fine` pitch
   (1/4096 of the phase increment); Felucca's SAMPLE engine ignored `fine` (it steps in 1/16 semitones), so
   `eng_sample.c` now applies it, which also makes TUNE's residual below 1/16 semitone exact on samples. PITCH is
   Felucca's TUNE (cents). The resonator's strings follow both (`tr_cents` in `tuna_reso.c`). Measured on the host:
-  C4 in Werckmeister at 430 sits 25 cents under equal at 440 (expected 28; the window mixes partials).
+  C4 in Werckmeister III at 430 sat 25 cents under equal at 440 (expected 28; the window mixes partials).
 - **STYLE presets, then the player's own.** A STYLE writes tempo, rubato, touch, accent, pedal and legato; turning
   any of them by hand makes it OWN again, so the card never claims a reading that is not playing.
 - **PLEYEL is a voicing.** The same Steinway samples, darker (the insert's low-pass 16 lower), a 38 % quicker decay
