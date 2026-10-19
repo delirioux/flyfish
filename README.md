@@ -52,7 +52,7 @@ Test builds: every push to `dev` leaves a package in the GitHub run's artifact `
 
 Nine sounds on Felucca's engines: GRAND (a Steinway D, sampled), PLEYEL (the same Steinway voiced darker, quicker
 and lighter: a voicing, not a recording of a Pleyel), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA, SINE KEY.
-The piano in stereo (the bass left, the treble right), three spaces of reverb (CATHEDRAL at 25 % to start), ten
+The piano nearly mono (WIDTH 5: more spreads the bass left and the treble right), three spaces of reverb (CATHEDRAL at 25 % to start), ten
 colours.
 
 <p align="center">
