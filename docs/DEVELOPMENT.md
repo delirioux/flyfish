@@ -118,14 +118,22 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   ones, peak -4.5 dBFS, nothing clipped. The mix costs about the same per sample as Tuna's piano pieces on this
   host; the real number comes from the FM-1.
 
+## Flash
+
+The app's code and constants run from flash (XIP, `firmware/app.ld`): 568 KB. The Steinway takes 243 KB of it
+(22.6 s of 4-bit ADPCM at 22.05 kHz). This container cannot fetch JieLi's toolchain, so 1.0's size was estimated by
+compiling the same sources for RV32IMFC at -Os: 182 KB of code, 345 KB of constants (the Steinway's 243 among them)
+and 22 KB for the player and the resonator, 549 KB in all (KB = 1,024 bytes): 19 KB under the 568, by another ISA's
+measure, which the AC79's code can be bigger or smaller than. The CI's link is the real test (it fails if the XIP
+region overflows) and its "Sizes" step lists what takes the room. If it does not fit: shorter piano notes with a
+looped tail (the pedal and REL then decide how long they ring), then Felucca's parts Flyfish does not use.
+
 ## Plan
 
-1. **On the FM-1.** First CI build (the flash and RAM report), install on `dev`, check: the splash, the keys and
-   knobs, the timing at 176, the CPU with the resonator, the settings surviving a power cycle.
-2. **Steinway, done in 0.2.** Next, if the flash allows: longer notes, a second velocity layer (the SAMPLE
-   engine would need velocity zones), the set's release resonance and pedal noises.
-3. **The browser.** Flyfish in Felucca's browser emulator (`web/emu`, as Tuna's Try page), and a site with the
-   installer.
-4. **The simulator in step.** The browser simulator predates the firmware: it lacks the fifteen re-struck bass
-   notes, and its sound names differ (WATER, GLASS, VIBES there; KALIMBA, MARIMBA, SINE KEY here).
-5. **More pieces?** Only if Flyfish earns it: Op. 10 has eleven more.
+1. **On the FM-1.** The CI link and its sizes; then on the device: the splash, the keys and knobs, the timing at
+   176, the CPU with the resonator, the settings and the practice chart surviving a power cycle, the MIDI pedals on
+   a real piano.
+2. **The piano.** If the flash allows: longer notes or a looped tail, a second velocity layer (the SAMPLE engine
+   would need velocity zones), a soundboard body, a RESONANCE card.
+3. **The browser.** Flyfish in Felucca's browser emulator (`web/emu`), as Tuna's Try page.
+4. **More pieces?** Only if Flyfish earns it: Op. 10 has eleven more.

@@ -1,0 +1,219 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only
+     Flyfish's web installer: Felucca's installer (web/index_pkg.html, Leo Kuroshita, Hügelton Instruments) by way of
+     Tuna's, for Flyfish's package, with the same update protocol (fm1pkg.js, fm1ota.js, inlined by web/ff_make_site.py). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyfish installer</title>
+<link rel="icon" href="../flyfish-logo.png">
+<style>
+  :root { color-scheme: dark; --bg: #0b0d14; --surf: #141a26; --fg: #e4f0f8; --dim: #8a9aaa; --theme: #50b8ec; --warn: #ff8c64; }
+  :root[data-theme="light"] { color-scheme: light; --bg: #f4f8fb; --surf: #e4eef5; --fg: #0b1620; --dim: #50606e; --theme: #1878b0; --warn: #c0482a; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 540px; margin: 0 auto; padding: 32px 16px 48px; }
+  .logo { display: block; width: 128px; height: 128px; margin: 0 auto 16px; border-radius: 50%; }
+  h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; text-align: center; }
+  .sub { text-align: center; color: var(--dim); margin: 0 0 28px; }
+  p { margin: 0 0 14px; }
+  a { color: var(--theme); }
+  button { font: inherit; font-weight: 600; background: var(--theme); color: var(--bg); border: 0; border-radius: 6px;
+           padding: 10px 24px; cursor: pointer; }
+  button:disabled { opacity: .35; cursor: default; }
+  .card { background: var(--surf); border-radius: 10px; padding: 18px 18px 6px; margin: 0 0 18px; }
+  #status { margin-top: 14px; min-height: 1.6em; font-weight: 600; }
+  .small { color: var(--dim); font-size: 13px; }
+  .warn { color: var(--warn); }
+  progress { width: 100%; height: 6px; margin-top: 12px; accent-color: var(--theme); }
+  details summary { cursor: pointer; color: var(--dim); }
+  pre { color: var(--dim); font-size: 12px; white-space: pre-wrap; margin-top: 16px; max-height: 240px; overflow: auto; }
+  input[type=file] { font-size: 13px; color: var(--dim); max-width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="../flyfish-logo.png" alt="">
+  <h1>Waterfall Flying Fish</h1>
+  <p class="sub">Chopin's Étude Op. 10 No. 1 on the M-VAVE FM-1, on Felucca</p>
+
+  <div class="card">
+    <p>Connect the FM-1 directly to the computer with a USB data cable and press Install. Chrome or Edge on a
+      computer; allow MIDI when the browser asks.</p>
+    <p class="warn">Do not unplug the cable or close this page while it writes.</p>
+    <p><button id="go" disabled>Install</button></p>
+    <progress id="bar" max="100" value="0"></progress>
+    <p id="status"></p>
+  </div>
+
+  <p class="small">Flyfish was built for love of one piece: it comes with no warranty. If the FM-1 misbehaves,
+    install <a href="https://hugelton.github.io/Felucca/" target="_blank" rel="noopener">Felucca</a> again, or
+    return to the official firmware below. Flyfish keeps its settings and practice chart in Felucca's first two
+    song slots: back up anything you made in Felucca first (Felucca's editor). If an install is cut off, press Install again: the FM-1
+    stays in update mode until it is finished. An FM-1 that no longer starts at all needs a
+    <a href="https://github.com/kurogedelic/FM-1-transporter" target="_blank" rel="noopener">Transporter</a>.</p>
+
+  <details class="card">
+    <summary>Install a test build</summary>
+    <p class="small">A Flyfish package from a test build (GitHub: Actions &gt; the run &gt; Artifacts &gt; flyfish-firmware, its
+      .fwsc). It is checked here, in the browser, and not sent anywhere. Install above puts the released Flyfish back.</p>
+    <p><input id="test-file" type="file" accept=".fwsc"></p>
+    <p><button id="test-go" disabled>Install test build</button></p>
+  </details>
+
+  <details class="card">
+    <summary>Return to the official firmware (V15)</summary>
+    <p class="small">Get the official FM-1 V15 from <a href="https://www.m-vave.com/download" target="_blank"
+      rel="noopener">M-VAVE</a> and select its unmodified FM-1.fwsc. It is checked here, in the browser, and not sent
+      anywhere. Flyfish's settings and practice chart are not kept.</p>
+    <p><input id="stock-file" type="file" accept=".fwsc"></p>
+    <p><button id="stock-go" disabled>Return to official V15</button></p>
+  </details>
+
+  <p class="small">GPL-3.0, no warranty. <a href="https://github.com/delirioux/flyfish">Source</a> ·
+    <a href="../firmware/LICENSES/">licences</a> · <a href="../">Flyfish</a>. Flyfish and Felucca are not affiliated with or
+    endorsed by M-VAVE; M-VAVE and FM-1 are trademarks of their respective owners.</p>
+  <pre id="log"></pre>
+</main>
+<script type="module">
+/*LIB*/
+const $ = (id) => document.getElementById(id);
+const meta = /*META*/;
+const TEXT = {
+  start: "Starting", verify: "Verifying", loader: "Switching to update mode", write: "Writing",
+  reboot: "Restarting", done: "Done: Flyfish is installed.", stopped: "Stopped. Replug the USB cable and press Install again.",
+  error: "Error: ",
+  denied: "MIDI (SysEx) access was not allowed. Allow MIDI in the site settings (address bar) and press Install again.",
+  notfound: "FM-1 not found. Check the USB cable (a data cable), close other apps that use MIDI, and press Install again.",
+  model: "The connected device is not an FM-1.",
+  lost: "The USB connection was lost. Replug it and press Install again.",
+  noloader: "The FM-1 in update mode was not found. Replug the USB cable and press Install again.",
+  noreturn: "The FM-1 did not come back. Switch it off and on.",
+  mismatch: "Written, but the FM-1 reports another version: ",
+  badpkg: "The file to install is damaged. Reload the page.",
+  nomidi: "This browser cannot do it. Open the page in Chrome or Edge on a computer.",
+  loadfail: "Could not load: ", stockValid: "Official V15 verified.", stockError: "Not the official V15: ",
+  stockConfirm: "Return this FM-1 to the official V15 firmware? Flyfish's settings and practice chart are not kept.",
+  stockDone: "Done: the official V15 is back.", leave: "Writing. Do not close the page.",
+};
+const sayK = (k, arg = "") => { $("status").textContent = (TEXT[k] || k) + arg; };
+const say = (txt) => { $("status").textContent = txt; };
+const log = (t) => { $("log").textContent += t + "\n"; };
+
+let image = null, stock = null, test = null, writing = false, stockEpoch = 0, testEpoch = 0;
+const lock = (on) => {
+  writing = on;
+  $("go").disabled = on || !image;
+  $("stock-go").disabled = on || !stock;
+  $("stock-file").disabled = on;
+  $("test-go").disabled = on || !test;
+  $("test-file").disabled = on;
+};
+window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault(); e.returnValue = TEXT.leave; } });
+
+const stepper = (doneKey) => {
+  const total = 74 + 1167;
+  return (k, a) => {
+    log(`${k} ${a ?? ""}`);
+    if (k === "start") sayK("start");
+    if (k === "verify") { sayK("verify"); $("bar").value = (a / total) * 100; }
+    if (k === "loader") sayK("loader");
+    if (k === "write") { sayK("write"); $("bar").value = ((74 + a) / total) * 100; }
+    if (k === "reboot") sayK("reboot");
+    if (k === "done") { $("bar").value = 100; sayK(doneKey); }
+  };
+};
+const failed = (e) => {
+  if (e && e.code && TEXT[e.code]) sayK(e.code, e.detail || ""); else sayK("error", e && e.message);
+  log(String(e && e.stack || e));
+};
+async function midiAccess() {
+  try { return await navigator.requestMIDIAccess({ sysex: true }); } catch (_) { sayK("denied"); return null; }
+}
+// one write: an FM-1 left in update mode is finished first, else the running firmware starts the update
+async function write(img, product, doneKey) {
+  const midi = await midiAccess();
+  if (!midi) return;
+  const up = new Updater(midi, log), step = stepper(doneKey);
+  const ota = await up.find((id) => /^ota-/i.test(id.model));
+  if (ota) {
+    ota.link.close();
+    sayK((await up.resume(img, step, product)) ? doneKey : "stopped");
+  } else {
+    await up.install(img, product, step);
+  }
+}
+
+(async () => {
+  if (!navigator.requestMIDIAccess) { sayK("nomidi"); return; }
+  try {
+    const r = await fetch(meta.pkg);
+    if (!r.ok) throw new Error(`${meta.pkg}: HTTP ${r.status}`);
+    const pkg = new Uint8Array(await r.arrayBuffer());
+    if (productOf(pkg) !== meta.product) { sayK("badpkg"); return; }
+    image = logicalImage(pkg);
+    say(`Flyfish ${meta.version}, on Felucca ${meta.felucca}`);
+    lock(false);
+  } catch (e) { sayK("loadfail", e.message); }
+})();
+
+$("go").addEventListener("click", async () => {
+  if (writing || !image) return;
+  lock(true);
+  try { await write(image, meta.product, "done"); } catch (e) { failed(e); }
+  lock(false);
+});
+
+// a test build: a package of Felucca's own loader (FELUCCA-LOADER-1) for the FM-1 (FM-1_9xx), as the site's is
+const hasMark = (pkg, text) => {
+  const m = new TextEncoder().encode(text);
+  outer: for (let i = 0; i + m.length <= pkg.length; i++) {
+    for (let k = 0; k < m.length; k++) if (pkg[i + k] !== m[k]) continue outer;
+    return true;
+  }
+  return false;
+};
+$("test-file").addEventListener("change", async () => {
+  const epoch = ++testEpoch, file = $("test-file").files[0];
+  test = null; lock(false);
+  if (!file) return;
+  try {
+    const pkg = new Uint8Array(await file.arrayBuffer());
+    if (epoch !== testEpoch) return;
+    const product = productOf(pkg);
+    if (!/^FM-1_9[0-9][0-9]$/.test(product) || !hasMark(pkg, "FELUCCA-LOADER-1")) {
+      say("Not a Flyfish (or Felucca) package for the FM-1.");
+      return;
+    }
+    test = { image: logicalImage(pkg), product, name: file.name };
+    say(`Test build ${file.name} verified.`);
+    lock(false);
+  } catch (e) { if (epoch === testEpoch) say("Not a Flyfish package: " + e.message); }
+});
+$("test-go").addEventListener("click", async () => {
+  if (writing || !test || !confirm(`Install the test build ${test.name}?`)) return;
+  lock(true);
+  try { await write(test.image, test.product, "done"); } catch (e) { failed(e); }
+  lock(false);
+});
+
+$("stock-file").addEventListener("change", async () => {
+  const epoch = ++stockEpoch, file = $("stock-file").files[0];
+  stock = null; lock(false);
+  if (!file) return;
+  try {
+    const v = await validateStockPackage(new Uint8Array(await file.arrayBuffer()));
+    if (epoch !== stockEpoch) return;
+    stock = v; sayK("stockValid"); lock(false);
+  } catch (e) { if (epoch === stockEpoch) sayK("stockError", e.message); }
+});
+$("stock-go").addEventListener("click", async () => {
+  if (writing || !stock || !confirm(TEXT.stockConfirm)) return;
+  lock(true);
+  try { await write(stock.image, stock.product, "stockDone"); } catch (e) { failed(e); }
+  lock(false);
+});
+</script>
+</body>
+</html>

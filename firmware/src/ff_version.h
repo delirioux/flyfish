@@ -2,6 +2,6 @@
 /* Flyfish's own version (the splash, MENU, the package's name); Felucca's is FELUCCA_VERSION */
 #ifndef FF_VERSION_H
 #define FF_VERSION_H
-#define FF_VERSION "0.4"
+#define FF_VERSION "1.0"
 #define FF_VERSION_STR FF_VERSION
 #endif
