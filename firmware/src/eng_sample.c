@@ -199,6 +199,8 @@ static void sample_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, cons
     uint32_t i, frac = v->ph[1];
     int32_t d16 = clamp(m->pitch16 + p[P_E1] * 16 - z->root16, -1536, 576);   /* <= 3 octaves up: bounded decode load */
     uint32_t r = pow2_q16(d16), stepq = (r >> 8) * (z->rate >> 8);   /* Q16 samples per output */
+    if (m->fine)                                     /* (Flyfish) the residual below 1/16 semitone: TUNE, a temperament */
+        stepq += (uint32_t)((int32_t)(stepq >> 12) * m->fine);
     int32_t bits = p[P_E2], lp = 4000 + ((clamp((p[P_E4] << 8) + m->cutoff, 0, 127 << 8) * 28767) >> 15);
     int32_t drv = p[P_E6], sh = bits / 10;
     if (v->s[6] == 2) {                               /* no sample data: the sine at the note's pitch + TUNE */

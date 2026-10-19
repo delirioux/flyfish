@@ -87,7 +87,7 @@ static int32_t fu_icon_mid(int32_t x, int32_t cy, uint32_t size, uint32_t id, ui
 }
 
 /* ---- the cards ------------------------------------------------------------------------------------------- */
-enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_KEY, FC_SND, FC_PAL, FC_ROUNDS, FC_OFF };
+enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_KEY, FC_SND, FC_PAL, FC_ROUNDS, FC_ERASE, FC_STYLE, FC_OFF };
 typedef struct {
     const char *label;
     uint8_t off;                                   /* offsetof(ff_settings, the field) */
@@ -108,6 +108,16 @@ static const char *const FN_BASS[] = {"OCTAVE", "SINGLE", "DRONE", "NONE"};
 static const char *const FN_SPACE[] = {"ROOM", "HALL", "CHURCH"};           /* (the card: CATHEDRAL does not fit, as Tuna) */
 static const char *const FN_SPACE_LONG[] = {"ROOM", "HALL", "CATHEDRAL"};   /* (the MIX panel) */
 static const char *const FN_STYLE[] = {"FLAT", "LINE"};
+static const char *const FN_RHYTHM[] = {"EVEN", "L-S", "S-L", "ACC 2", "ACC 3", "ACC 4"};
+static const char *const FN_RHYTHM_LONG[] = {"EVEN", "LONG-SHORT", "SHORT-LONG", "ACCENT ON 2", "ACCENT ON 3",
+                                             "ACCENT ON 4"};
+static const char *const FN_SHOW[] = {"BEST", "MISSES"};
+static const char *const FN_INTERP[] = {"OWN", "CLASSIC", "ROMAN.", "VIRT.", "NOCT."};          /* (the card) */
+static const char *const FN_INTERP_LONG[] = {"YOUR OWN", "CLASSIC", "ROMANTIC", "VIRTUOSO", "NOCTURNE"};
+static const char *const FN_TUNING[] = {"EQUAL", "WERCK", "KIRNB", "VALLOT"};
+static const char *const FN_TUNING_LONG[] = {"EQUAL TEMPERAMENT", "WERCKMEISTER III", "KIRNBERGER III", "VALLOTTI"};
+static const char *const FN_VIEW[] = {"WATER", "SCORE"};
+static const char *const FN_PITCH[] = {"440", "435", "430"};
 #define C_NUM(l, f) {l, FS_(f), FC_NUM, 0, 100, 5, 0}
 #define C_LIST(l, f, n) {l, FS_(f), FC_LIST, 0, (int16_t)(sizeof n / sizeof n[0]) - 1, 1, n}
 #define C_OFF {"", 0, FC_OFF, 0, 0, 0, 0}
@@ -122,11 +132,15 @@ static const fu_cdef FU_CARDS[FU_PAGES][4] = {
     [FU_PG_VAR] = {{"KEY", FS_(key), FC_KEY, -6, 6, 1, 0}, C_LIST("MODE", scale, FN_SCALE), C_LIST("BASS", bass, FN_BASS),
                     {"ROUNDS", FS_(rounds), FC_ROUNDS, 0, FF_ROUNDS_MAX, 1, 0}},
     [FU_PG_MIX] = {C_NUM("RIGHT", right), C_NUM("LEFT", left), C_NUM("REVERB", reverb), C_LIST("SPACE", space, FN_SPACE)},
-    [FU_PG_FINGERS] = {C_NUM("LEGATO", legato), C_OFF, C_OFF, C_OFF},
-    [FU_PG_MENU] = {{"COLOR", FS_(palette), FC_PAL, 0, 9, 1, 0}, C_LIST("STYLE", style, FN_STYLE), C_OFF, C_OFF},
+    [FU_PG_PRACTICE3] = {C_LIST("RHYTHM", rhythm, FN_RHYTHM), C_LIST("CHORDS", chords, FN_ONOFF), C_LIST("SHOW", show, FN_SHOW),
+                         {"ERASE", FS_(show), FC_ERASE, 0, 1, 1, 0}},
+    [FU_PG_PIANO] = {{"STYLE", FS_(interp), FC_STYLE, 0, FF_STYLE_COUNT - 1, 1, FN_INTERP}, C_NUM("LEGATO", legato),
+                     C_LIST("SOFT", soft, FN_ONOFF), C_LIST("TUNING", tuning, FN_TUNING)},
+    [FU_PG_MENU] = {{"COLOR", FS_(palette), FC_PAL, 0, 9, 1, 0}, C_LIST("LOOK", style, FN_STYLE), C_LIST("VIEW", view, FN_VIEW),
+                    C_LIST("PITCH", pitch, FN_PITCH)},
 };
 static const char *const FU_PAGE_NAMES[FU_PAGES] = {"HOME", "SOUND", "PRACTICE", "PRACTICE 2", "VARIATIONS",
-                                                    "MIX", "MENU", "FINGERS"};
+                                                    "MIX", "MENU", "PIANO", "PRACTICE 3"};
 const char *fu_page_name(int page) { return page >= 0 && page < FU_PAGES ? FU_PAGE_NAMES[page] : ""; }
 
 static int fu_get(const ff_ui *u, const fu_cdef *c)
@@ -151,6 +165,8 @@ static void fu_card_value(const ff_ui *u, const fu_cdef *c, char *t, unsigned n)
     case FC_SND: fu_cpy(t, ff_sound_name(v), n); break;
     case FC_PAL: fu_cpy(t, UI_PALETTES[fu_wrap(v, (int)NPALETTES)].name, n); break;
     case FC_ROUNDS: if (v) fu_fmt_int(t, v); else fu_cpy(t, "INF", n); break;   /* (0 after 16: INF) */
+    case FC_STYLE: fu_cpy(t, c->names[fu_clampi(v, c->lo, c->hi)], n); break;
+    case FC_ERASE: fu_cpy(t, u->erase_ms > 0 ? "AGAIN" : "TURN", n); break;
     case FC_OFF: break;
     default: fu_fmt_int(t, v); break;
     }
@@ -163,7 +179,7 @@ static void fu_draw_card(ff_ui *u, int i, const fu_cdef *c)
     char val[24];
     fu_card_value(u, c, val, sizeof val);
     int ratio = -1;
-    if (c->kind != FC_OFF && (c->kind != FC_LIST || c->off == FS_(mode) || c->off == FS_(ramp)) && c->hi > c->lo)
+    if (c->kind != FC_OFF && c->kind != FC_ERASE && c->kind != FC_STYLE && (c->kind != FC_LIST || c->off == FS_(mode) || c->off == FS_(ramp)) && c->hi > c->lo)
         ratio = c->kind == FC_ROUNDS && !fu_get(u, c) ? 1000 : (fu_get(u, c) - c->lo) * 1000 / (c->hi - c->lo);
     uint32_t sig = fu_hash(2166136261u + (uint32_t)i * 7u + ux.gen * 131u + (uint32_t)hot * 3u + (uint32_t)u->page * 977u,
                            c->label);
@@ -210,6 +226,11 @@ static void fu_head_msg(const ff_ui *u, char *t, unsigned n)
         }
     } else if (p->playing && p->count_left > 0) {
         fu_cpy(t, "COUNT IN", n);
+    } else if (p->playing && u->page == FU_PG_HOME && p->s.view == FF_VIEW_SCORE) {
+        char rn[16];                                  /* (the score's panel is all staves: the harmony up here) */
+        ff_chord_name(p, ff_bar(p), t, n);
+        ff_roman(p, ff_bar(p), rn, sizeof rn);
+        if (rn[0]) { fu_cat(t, "  ", n); fu_cat(t, rn, n); }
     } else if (p->loop) {
         char a[8];
         fu_cpy(t, "LOOP ", n);
@@ -327,9 +348,14 @@ static void fu_panel_waterfall(ff_ui *u)
     cv_rect(8, FU_POOL + 8, 224, 1, T_LINE);
     char ch[24];
     if (p->playing) {
+        char rn[16];
         ff_chord_name(p, ff_bar(p), ch, sizeof ch);
-        if (ch[0])
-            cv_text_on(10, 4, &AF_S, ch, T_TEXT, T_SURF);
+        ff_roman(p, ff_bar(p), rn, sizeof rn);
+        if (ch[0]) {
+            int32_t x = cv_text_on(10, 4, &AF_S, ch, T_TEXT, T_SURF);
+            if (rn[0])
+                cv_text_on(x + 8, 4, &AF_S, rn, T_THEME, T_SURF);   /* the harmony's degree, in C */
+        }
     }
     cv_text_r(230, 4, &AF_S, "OP. 10 NO. 1", T_MID, T_SURF);
 }
@@ -515,14 +541,187 @@ static void fu_panel_space(ff_ui *u)
 
 static void fu_panel_menu(ff_ui *u)
 {
-    static char rows[3][32];
-    const char *items[3] = {rows[0], rows[1], rows[2]};
+    static char rows[5][32];
+    const char *items[5] = {rows[0], rows[1], rows[2], rows[3], rows[4]};
     fu_cpy(rows[0], "COLOR  ", sizeof rows[0]);
     fu_cat(rows[0], UI_PALETTES[u->pl->s.palette % NPALETTES].name, sizeof rows[0]);
-    fu_cpy(rows[1], "STYLE  ", sizeof rows[1]);
+    fu_cpy(rows[1], "LOOK  ", sizeof rows[1]);
     fu_cat(rows[1], FN_STYLE[u->pl->s.style % 2u], sizeof rows[1]);
-    fu_cpy(rows[2], "FLYFISH " FF_VERSION_STR, sizeof rows[2]);
-    fu_panel_list("MENU", items, 3, 0, false);
+    fu_cpy(rows[2], "VIEW  ", sizeof rows[2]);
+    fu_cat(rows[2], u->pl->s.view ? "SCORE" : "WATERFALL", sizeof rows[2]);
+    fu_cpy(rows[3], "PITCH  A = ", sizeof rows[3]);
+    fu_cat(rows[3], FN_PITCH[u->pl->s.pitch % FF_PITCH_COUNT], sizeof rows[3]);
+    fu_cat(rows[3], " HZ", sizeof rows[3]);
+    fu_cpy(rows[4], "FLYFISH " FF_VERSION_STR, sizeof rows[4]);
+    fu_panel_list("MENU", items, 5, 0, false);
+}
+
+/* SCORE (MENU's VIEW): the bar playing on two staves, the group of four sounding in ACCENT; what lies above the
+ * treble staff's reach (C6) drawn an octave or two lower under 8va / 15ma, the deep bass an octave up under 8vb, as
+ * the printed score does; held notes hollow; sharps marked (the étude's few flats spelled as sharps) */
+static int fu_dia(int note)                               /* the staff step: C0 = 0, D0 = 1 .. (a sharp: its lower letter) */
+{
+    static const uint8_t STEP[12] = {0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6};
+    return note / 12 * 7 + STEP[note % 12];
+}
+static bool fu_sharp(int note) { int pc = note % 12; return pc == 1 || pc == 3 || pc == 6 || pc == 8 || pc == 10; }
+#define FU_SC_X0 26
+#define FU_SC_W 204
+#define FU_TREB 50                                        /* the treble staff's bottom line (E4); lines 6 px apart */
+#define FU_BASS 98                                        /* the bass staff's bottom line (G2) */
+static void fu_panel_score(ff_ui *u)
+{
+    const ff_player *p = u->pl;
+    static ff_shown ev[64];
+    int bar = ff_bar(p), s0 = (bar - 1) * 16;
+    for (int i = 0; i < 5; ++i) {                         /* the staves */
+        cv_rect(8, FU_TREB - 24 + i * 6, 224, 1, T_LINE);
+        cv_rect(8, FU_BASS - 24 + i * 6, 224, 1, T_LINE);
+    }
+    cv_rect(8, FU_TREB - 24, 1, FU_BASS - FU_TREB + 25, T_LINE);    /* the brace's line, the bar lines */
+    cv_rect(231, FU_TREB - 24, 1, 25, T_LINE);
+    cv_rect(231, FU_BASS - 24, 1, 25, T_LINE);
+    cv_text_on(12, FU_TREB - 18, &AF_M, "G", T_DIM, T_SURF);       /* (the clefs, as letters) */
+    cv_text_on(12, FU_BASS - 22, &AF_M, "F", T_DIM, T_SURF);
+    int n = ff_notes_in(p, s0, s0 + 16, ev, 64), cur_g = p->cur >= s0 && p->cur < s0 + 16 ? (p->cur - s0) / 4 : -1;
+    int32_t gx0[2][4], gx1[2][4], gyt[2][4], gyb[2][4], gn[2][4], gstep[2][4];
+    for (int h = 0; h < 2; ++h)
+        for (int g = 0; g < 4; ++g) { gx0[h][g] = 999; gx1[h][g] = -1; gyt[h][g] = 999; gyb[h][g] = -999; gn[h][g] = 0; gstep[h][g] = -1; }
+    int8_t up[4] = {0}, dn[4] = {0};                                 /* each group's 8va (1) / 15ma (2), 8vb (1) */
+    for (int i = 0; i < n; ++i) {                                     /* (a group shifts as one, as the score does) */
+        int st = ev[i].step - s0, g = st / 4, k = 0, note = ev[i].note;
+        if (st < 0 || st > 15) continue;
+        if (ev[i].hand == 0) { while (note - 12 * k > 84) k++; if (k > up[g]) up[g] = (int8_t)k; }
+        else { while (note + 12 * k < 40) k++; if (k > dn[g]) dn[g] = (int8_t)k; }
+    }
+    for (int i = 0; i < n; ++i) {
+        const ff_shown *e = &ev[i];
+        int st = e->step - s0, h = e->hand == 0 ? 0 : 1, note = e->note;
+        if (st < 0 || st > 15) continue;
+        bool held = e->len >= 8;
+        note += h == 0 ? -12 * up[st / 4] : 12 * dn[st / 4];
+        int32_t y = h == 0 ? FU_TREB - (fu_dia(note) - fu_dia(64)) * 3 : FU_BASS - (fu_dia(note) - fu_dia(43)) * 3;
+        int32_t x = FU_SC_X0 + st * FU_SC_W / 16 + 4;
+        int32_t top = h == 0 ? FU_TREB - 24 : FU_BASS - 24, bot = h == 0 ? FU_TREB : FU_BASS;
+        for (int32_t ly = top - 6; ly >= y - 1; ly -= 6) cv_rect(x - 5, ly, 11, 1, T_MID);   /* ledger lines */
+        for (int32_t ly = bot + 6; ly <= y + 1; ly += 6) cv_rect(x - 5, ly, 11, 1, T_MID);
+        int g = st / 4;
+        uint16_t c = g == cur_g ? T_ACCENT : h == 0 ? T_THEME : T_TEXT;
+        if (held) {
+            cv_frame(x - 3, y - 2, 7, 5, c);
+        } else {
+            cv_rrect(x - 3, y - 2, 7, 5, 2, c, T_SURF);
+            if (x < gx0[h][g]) gx0[h][g] = x;
+            if (x > gx1[h][g]) gx1[h][g] = x;
+            if (y < gyt[h][g]) gyt[h][g] = y;
+            if (y > gyb[h][g]) gyb[h][g] = y;
+            if (gstep[h][g] != st) { gn[h][g]++; gstep[h][g] = st; }
+        }
+        if (fu_sharp(e->note)) cv_text_on(x - 11, y - 6, &AF_S, "#", c, T_SURF);
+    }
+    for (int h = 0; h < 2; ++h)                                      /* stems and beams: each group of four */
+        for (int g = 0; g < 4; ++g) {
+            if (gx1[h][g] < 0) continue;
+            uint16_t c = g == cur_g ? T_ACCENT : h == 0 ? T_THEME : T_TEXT;
+            if (h == 0 && gyt[h][g] + gyb[h][g] > 2 * (FU_TREB - 12)) {   /* the right hand, low: stems up */
+                int32_t by = gyt[h][g] - 16;
+                for (int st = g * 4; st < g * 4 + 4; ++st) {
+                    int32_t x = FU_SC_X0 + st * FU_SC_W / 16 + 4;
+                    if (x >= gx0[h][g] && x <= gx1[h][g]) cv_rect(x + 3, by, 1, gyb[h][g] - by, c);
+                }
+                if (gn[h][g] > 1) { cv_rect(gx0[h][g] + 3, by, gx1[h][g] - gx0[h][g] + 1, 2, c); cv_rect(gx0[h][g] + 3, by + 4, gx1[h][g] - gx0[h][g] + 1, 2, c); }
+            } else {                                                 /* high, and the left hand: stems down */
+                int32_t by = gyb[h][g] + 16;
+                for (int st = g * 4; st < g * 4 + 4; ++st) {
+                    int32_t x = FU_SC_X0 + st * FU_SC_W / 16 + 4;
+                    if (x >= gx0[h][g] && x <= gx1[h][g]) cv_rect(x - 3, gyt[h][g], 1, by - gyt[h][g], c);
+                }
+                if (gn[h][g] > 1) { cv_rect(gx0[h][g] - 3, by - 1, gx1[h][g] - gx0[h][g] + 1, 2, c); cv_rect(gx0[h][g] - 3, by - 5, gx1[h][g] - gx0[h][g] + 1, 2, c); }
+            }
+        }
+    for (int pass = 0; pass < 2; ++pass)                              /* the octave marks: a run of groups each */
+        for (int g = 0; g < 4;) {
+            int o = pass == 0 ? up[g] : dn[g], e = g;
+            if (!o) { ++g; continue; }
+            while (e + 1 < 4 && (pass == 0 ? up[e + 1] : dn[e + 1]) == o) ++e;
+            int32_t x0 = FU_SC_X0 + g * 4 * FU_SC_W / 16, x1 = FU_SC_X0 + (e * 4 + 3) * FU_SC_W / 16 + 8;
+            const char *lab = pass == 0 ? (o == 2 ? "15ma" : "8va") : "8vb";
+            int32_t y = pass == 0 ? 6 : FU_BASS + 14;
+            int32_t lx = cv_text_on(x0, y - 5, &AF_S, lab, T_MID, T_SURF) + 2;
+            for (int32_t x = lx; x < x1; x += 4) cv_rect(x, y, 2, 1, T_MID);
+            cv_rect(x1, pass == 0 ? y : y - 3, 1, 4, T_MID);              /* the hook at its end */
+            g = e + 1;
+        }
+}
+
+/* PIANO: the STYLE, SOFT, and the tuning as each note's cents from equal temperament (tuned to A) */
+static void fu_panel_piano(ff_ui *u)
+{
+    const ff_player *p = u->pl;
+    char t[32];
+    cv_text_on(10, 4, &AF_M, FN_INTERP_LONG[p->s.interp % FF_STYLE_COUNT], T_TEXT, T_SURF);
+    fu_cpy(t, "A = ", sizeof t);
+    fu_cat(t, FN_PITCH[p->s.pitch % FF_PITCH_COUNT], sizeof t);
+    fu_cat(t, " HZ", sizeof t);
+    cv_text_r(230, 4 + AF_M_CAP_Y + AF_M_CAP_H - AF_S_CAP_Y - AF_S_CAP_H, &AF_S, t, T_MID, T_SURF);
+    fu_cpy(t, FN_TUNING_LONG[p->s.tuning % FF_TUNE_COUNT], sizeof t);
+    if (p->s.soft) fu_cat(t, ", UNA CORDA", sizeof t);
+    cv_text_on(10, 24, &AF_S, t, T_MID, T_SURF);
+    const int32_t mid = 70, x0 = 14;
+    cv_rect(8, mid, 224, 1, T_LINE);
+    for (int i = 0; i < 12; ++i) {
+        float c = ff_temper_ct(&p->s, i);
+        int32_t h = (int32_t)(c * 2.5f), x = x0 + i * 18;
+        uint16_t col = i == 0 || i == 4 || i == 7 ? T_THEME : ux_mix(T_SURF, T_THEME, 60);   /* (C major's own: lit) */
+        if (h > 0) cv_rect(x, mid - h, 12, h, col);
+        else if (h < 0) cv_rect(x, mid + 1, 12, -h, col);
+        else cv_rect(x, mid - 1, 12, 3, col);
+        const char *nm = ff_note_name(i);
+        cv_text_on(x + 6 - text_w(&AF_S, nm) / 2, 104, &AF_S, nm, fu_sharp(i) ? T_DIM : T_MID, T_SURF);
+    }
+}
+
+/* PRACTICE 3: the progress, bar by bar: the best SPEED played clean in WAIT (100 %: ACCENT), or the wrong keys */
+static void fu_panel_progress(ff_ui *u)
+{
+    const ff_player *p = u->pl;
+    char t[40], a[8];
+    bool miss = p->s.show == 1;
+    int full = 0, most = -1;
+    for (int b = 0; b < FF_BARS_N - 1; ++b) {
+        full += p->best[b] >= 100;
+        if (p->miss[b] && (most < 0 || p->miss[b] > p->miss[most])) most = b;
+    }
+    cv_text_on(10, 4, &AF_S, miss ? "WRONG KEYS" : "BEST CLEAN SPEED", T_TEXT, T_SURF);
+    if (miss) {
+        if (most >= 0) { fu_cpy(t, "MOST: BAR ", sizeof t); fu_fmt_int(a, most + 1); fu_cat(t, a, sizeof t); }
+        else fu_cpy(t, "NONE YET", sizeof t);
+    } else {
+        fu_fmt_int(t, full);
+        fu_cat(t, " BARS AT 100%", sizeof t);
+    }
+    cv_text_r(230, 4, &AF_S, t, T_MID, T_SURF);
+    const int32_t base = 98, top = 22, x0 = 8, w = 224;
+    if (p->loop) {
+        int32_t lx = x0 + (p->s.from - 1) * w / 79, rx = x0 + p->s.to * w / 79;
+        cv_rect(lx, top, rx - lx, base - top, T_TINT);
+    }
+    for (int b = 0; b < 79; ++b) {
+        int32_t x = x0 + b * w / 79, bw = x0 + (b + 1) * w / 79 - x - 1;
+        if (bw < 1) bw = 1;
+        int v = miss ? (p->miss[b] > 19 ? 19 : p->miss[b]) * 100 / 19 : p->best[b];
+        int32_t h = v * (base - top) / 100;
+        uint16_t c = miss ? T_ACCENT : v >= 100 ? T_ACCENT : T_THEME;
+        if (h > 0) cv_rect(x, base - h, bw, h, c);
+    }
+    cv_rect(x0, base + 1, w, 1, T_LINE);
+    int32_t bx = x0 + (ff_bar(p) - 1) * w / 79;
+    cv_rect(bx, base + 3, 2, 3, T_TEXT);                             /* the bar playing */
+    fu_cpy(t, FN_RHYTHM_LONG[p->s.rhythm % FF_RHY_COUNT], sizeof t);
+    if (p->s.chords) fu_cat(t, ", CHORDS", sizeof t);
+    cv_free_text(10, 106, &AF_S, t, T_MID, T_SURF, 118);
+    if (p->s.mode != FF_MODE_WAIT || p->s.you == FF_YOU_NONE)   /* (only WAIT with a hand left out counts) */
+        cv_text_r(230, 106, &AF_S, "NEEDS WAIT+YOU", T_DIM, T_SURF);
 }
 
 static void fu_draw_panel(ff_ui *u)
@@ -534,7 +733,13 @@ static void fu_draw_panel(ff_ui *u)
         fu_panel_list("SOUND", names, FF_SOUNDS, u->pl->s.sound, true);
     } else {
         switch (u->page) {
-        case FU_PG_HOME: case FU_PG_FINGERS: if (u->pl->playing || fu_drops_alive(u)) fu_panel_waterfall(u); else fu_panel_stopped(u); break;
+        case FU_PG_HOME:
+            if (u->pl->playing && u->pl->s.view == FF_VIEW_SCORE) fu_panel_score(u);
+            else if (u->pl->playing || fu_drops_alive(u)) fu_panel_waterfall(u);
+            else fu_panel_stopped(u);
+            break;
+        case FU_PG_PIANO: fu_panel_piano(u); break;
+        case FU_PG_PRACTICE3: fu_panel_progress(u); break;
         case FU_PG_SOUND: {
             static const char *names[FF_SOUNDS];
             for (int i = 0; i < FF_SOUNDS; ++i) names[i] = ff_sound_name(i);
@@ -628,6 +833,7 @@ void fu_knob(ff_ui *u, int k, int d)
     switch (k) {
     case FU_K_SELECT:
         p->s.bpm = (uint8_t)fu_clampi(p->s.bpm + d, 40, 240);
+        p->s.interp = FF_STYLE_OWN;                   /* (a STYLE's tempo changed: the player's own now) */
         u->hot = 9;
         u->hot_ms = 700;
         u->changed = true;
@@ -649,6 +855,28 @@ void fu_knob(ff_ui *u, int k, int d)
     case FU_K1: case FU_K2: case FU_K3: case FU_K4: {
         const fu_cdef *c = &FU_CARDS[u->page][k - FU_K1];
         if (c->kind == FC_OFF) return;
+        if (c->kind == FC_ERASE) {                    /* turned once: armed; again within 2 s: the chart erased */
+            if (u->erase_ms > 0) {
+                ff_progress_erase(p);
+                u->erase_ms = 0;
+                fu_msg(u, "PROGRESS ERASED");
+            } else {
+                u->erase_ms = 2000;
+                fu_msg(u, "TURN AGAIN TO ERASE");
+            }
+            u->hot = k - FU_K1;
+            u->hot_ms = 700;
+            return;
+        }
+        if (c->kind == FC_STYLE) {                    /* a reading: its tempo, rubato, touch, accent, pedal, legato */
+            ff_style_apply(&p->s, fu_wrap(p->s.interp + d, FF_STYLE_COUNT));
+            ff_changed(p);
+            fu_msg(u, FN_INTERP_LONG[p->s.interp % FF_STYLE_COUNT]);
+            u->hot = k - FU_K1;
+            u->hot_ms = 700;
+            u->changed = true;
+            return;
+        }
         int v = fu_get(u, c) + d * c->step;
         if (c->kind == FC_ROUNDS)                     /* 1 .. 16, then INF (0); turning down from 1: INF */
             v = fu_wrap(v, FF_ROUNDS_MAX + 1);
@@ -660,6 +888,11 @@ void fu_knob(ff_ui *u, int k, int d)
         if (c->off == FS_(to) && p->s.from > p->s.to) p->s.from = p->s.to;
         if (c->off == FS_(mode)) p->waiting = false;
         if (c->off == FS_(palette) || c->off == FS_(style)) fu_apply_style(u);
+        if (c->off == FS_(rubato) || c->off == FS_(touch) || c->off == FS_(accent) || c->off == FS_(pedal) ||
+            c->off == FS_(legato))
+            p->s.interp = FF_STYLE_OWN;               /* (a STYLE changed by hand: the player's own now) */
+        if (c->off == FS_(rhythm)) fu_msg(u, FN_RHYTHM_LONG[p->s.rhythm % FF_RHY_COUNT]);
+        if (c->off == FS_(tuning)) fu_msg(u, FN_TUNING_LONG[p->s.tuning % FF_TUNE_COUNT]);
         ff_changed(p);
         u->hot = k - FU_K1;
         u->hot_ms = 700;
@@ -712,8 +945,9 @@ void fu_button(ff_ui *u, int b, bool down)
     }
     case FU_B_EDIT: fu_goto_page(u, FU_PG_SOUND); break;
     case FU_B_GLO: fu_goto_page(u, FU_PG_MIX); break;
-    case FU_B_FX: fu_goto_page(u, FU_PG_FINGERS); break;
-    case FU_B_SEQ: fu_goto_page(u, u->page == FU_PG_PRACTICE ? FU_PG_PRACTICE2 : FU_PG_PRACTICE); break;
+    case FU_B_FX: fu_goto_page(u, FU_PG_PIANO); break;
+    case FU_B_SEQ: fu_goto_page(u, u->page == FU_PG_PRACTICE ? FU_PG_PRACTICE2 : u->page == FU_PG_PRACTICE2 ? FU_PG_PRACTICE3
+                                   : FU_PG_PRACTICE); break;
     case FU_B_ARP: fu_goto_page(u, FU_PG_VAR); break;
     case FU_B_SAVE: fu_msg(u, p->playing ? "STOP TO SAVE" : "SAVED"); u->changed = true; break;
     default: fu_msg(u, "NOT USED"); break;
@@ -792,6 +1026,7 @@ void fu_tick(ff_ui *u, int ms)
         if (u->rp[i].age >= 0 && (u->rp[i].age = (int16_t)(u->rp[i].age + ms)) > 2400)
             u->rp[i].age = -1;
     if (u->hot_ms > 0) u->hot_ms -= ms;
+    if (u->erase_ms > 0) u->erase_ms -= ms;
     if (u->browse_ms > 0 && (u->browse_ms -= ms) <= 0) {
         u->browse_ms = 0;
         u->force = true;

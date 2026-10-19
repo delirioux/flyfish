@@ -33,7 +33,7 @@ static int32_t input_gain(int32_t g)
 
 static float period_of(const tr_reso *r, int note)
 {
-    float hz = 440.0f * exp2f((float)(note - 69) / 12.0f);
+    float hz = 440.0f * exp2f(((float)(note - 69) + r->ct[note % 12] * 0.01f) / 12.0f);
     float p = r->sr * 0.5f / hz;
     while (p > (float)(TR_LINE - 4))
         p *= 0.5f;                                 /* too low for the line: an octave up */
@@ -84,6 +84,19 @@ void tr_tune(tr_reso *r, const int *notes, int n)
         r->g[k] = loop_gain(r, p);
         r->ig[k] = input_gain(r->g[k]);
     }
+}
+
+void tr_cents(tr_reso *r, const float *ct12)
+{
+    for (int i = 0; i < 12; ++i)
+        r->ct[i] = ct12[i];
+    for (int k = 0; k < TR_STRINGS; ++k)
+        if (r->note[k] >= 0) {
+            float p = period_of(r, r->note[k]);
+            r->d_to[k] = (int32_t)(p * 65536.0f);   /* (it glides there) */
+            r->g[k] = loop_gain(r, p);
+            r->ig[k] = input_gain(r->g[k]);
+        }
 }
 
 int tr_notes_for(int mode, int tonic, int chord_root, const int8_t *tones, int ntones, int *notes)

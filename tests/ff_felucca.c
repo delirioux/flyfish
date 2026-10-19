@@ -4,8 +4,8 @@
  * play, short of its hardware; and the voice budget and the CPU against Felucca's reference mix.
  *
  *   tests/ff_felucca.sh OUTDIR [SECONDS]
- *   env SOUND=0..7 (the SOUND card), PEDAL=0..3, VARY=0..100 FIGURE=0..5 SEED, KEY, SCALE, BARS=from,to (a loop),
- *       NAME (the file: OUTDIR/flyfish_NAME.wav) */
+ *   env SOUND=0..8 (the SOUND card), PEDAL=0..3, KEY, SCALE, BARS=from,to (a loop), ROUNDS, LEGATO, TOUCH,
+ *       STYLE=0..4, SOFT, TUNING=0..3, PITCH=0..2, RHYTHM=0..5, CHORDS, NAME (the file: OUTDIR/flyfish_NAME.wav) */
 #define LIM_T 24000                            /* the master as Flyfish has it (fx.c) */
 #define main hostsim_main
 #include "hostsim.c"
@@ -26,7 +26,7 @@ static void sound(void *ctx, const ff_event *e)
 {
     (void)ctx;
     uint32_t tr = ffs_track_of(e->hand, e->note);
-    if (e->on) { trk_note_on(&trk[tr], e->note, e->vel); n_on++; }
+    if (e->on) { if (tr < 3u) ffs_note_on(&trk[tr], &P.s, e->note, e->vel); else trk_note_on(&trk[tr], e->note, e->vel); n_on++; }
     else if (tr != 3u) { trk_note_off(&trk[tr], e->note); n_off++; }
 }
 
@@ -46,7 +46,11 @@ static void setup(void)
     song.g[G_RSIZE] = FFS_SPACE[P.s.space][0];
     song.g[G_RDAMP] = FFS_SPACE[P.s.space][1];
     song.g[G_BPM] = P.s.bpm;
+    song.g[G_TUNE] = ffs_tune(&P.s);
     tr_init(&reso, (float)FS);
+    float ct[12];
+    for (int i = 0; i < 12; ++i) ct[i] = ff_temper_ct(&P.s, i) + ff_pitch_ct(&P.s);
+    tr_cents(&reso, ct);
 }
 
 int main(int argc, char **argv)
@@ -68,7 +72,13 @@ int main(int argc, char **argv)
     P.s.space = (uint8_t)env_int("SPACE", 2);
     P.s.rounds = (uint8_t)env_int("ROUNDS", 1);
     P.s.legato = (uint8_t)env_int("LEGATO", 25);
-    P.s.touch = (uint8_t)env_int("TOUCH", 40);       /* (the firmware's default is INF: a render ends) */
+    P.s.touch = (uint8_t)env_int("TOUCH", 40);
+    if (env_int("STYLE", 0)) ff_style_apply(&P.s, env_int("STYLE", 0));
+    P.s.soft = (uint8_t)env_int("SOFT", 0);
+    P.s.tuning = (uint8_t)env_int("TUNING", 0);
+    P.s.pitch = (uint8_t)env_int("PITCH", 0);
+    P.s.rhythm = (uint8_t)env_int("RHYTHM", 0);
+    P.s.chords = (uint8_t)env_int("CHORDS", 0);       /* (the firmware's default is INF: a render ends) */
     if (getenv("BARS")) {
         int a = 1, b = 2;
         sscanf(getenv("BARS"), "%d,%d", &a, &b);

@@ -217,9 +217,43 @@ int main(int argc, char **argv)
     fu_knob(&ui, FU_K1, -1);
     shot("practice2_free");
     press(FU_B_REC);
+    /* PRACTICE 3: the rhythms, the chords, the progress */
     press(FU_B_SEQ);
+    CHECK(ui.page == FU_PG_PRACTICE3, "SEQ a third time: PRACTICE 3");
+    fu_knob(&ui, FU_K1, 1);
+    CHECK(pl.s.rhythm == FF_RHY_LONG_SHORT, "RHYTHM LONG-SHORT (%d)", pl.s.rhythm);
+    fu_knob(&ui, FU_K2, 1);
+    CHECK(pl.s.chords == 1, "CHORDS on");
+    for (int b = 0; b < 79; ++b) { pl.best[b] = (uint8_t)(b < 30 ? 100 : b < 50 ? 60 + b % 5 * 5 : 0); pl.miss[b] = (uint8_t)(b % 7 == 3 ? b % 11 : 0); }
+    shot("practice3_best");
+    all_palettes("practice3_best");
+    fu_knob(&ui, FU_K3, 1);
+    shot("practice3_misses");
+    fu_knob(&ui, FU_K4, 1);
+    CHECK(pl.best[0] == 100, "ERASE once: armed, nothing erased");
+    shot("practice3_erase");
+    fu_knob(&ui, FU_K4, 1);
+    CHECK(pl.best[0] == 0 && pl.miss[3] == 0, "ERASE twice: erased");
+    fu_knob(&ui, FU_K1, -1); fu_knob(&ui, FU_K2, -1); fu_knob(&ui, FU_K3, -1);
+    press(FU_B_SEQ);
+    CHECK(ui.page == FU_PG_PRACTICE, "SEQ: back to PRACTICE");
     fu_knob(&ui, FU_K4, -1);
     fu_knob(&ui, FU_K1, 8);
+    /* PIANO: a STYLE, SOFT, a temperament */
+    press(FU_B_FX);
+    CHECK(ui.page == FU_PG_PIANO, "FX: PIANO");
+    fu_knob(&ui, FU_K1, 2);
+    CHECK(pl.s.interp == FF_STYLE_ROMANTIC && pl.s.bpm == 160 && pl.s.rubato == 70, "STYLE ROMANTIC: its tempo and rubato");
+    fu_knob(&ui, FU_K3, 1);
+    fu_knob(&ui, FU_K4, 1);
+    CHECK(pl.s.soft && pl.s.tuning == FF_TUNE_WERCKMEISTER, "SOFT, WERCKMEISTER");
+    shot("piano");
+    all_palettes("piano");
+    fu_knob(&ui, FU_K2, 1);
+    CHECK(pl.s.interp == FF_STYLE_OWN, "LEGATO by hand: the STYLE is OWN");
+    fu_knob(&ui, FU_K2, -1); fu_knob(&ui, FU_K3, -1); fu_knob(&ui, FU_K4, -1);
+    ff_style_apply(&pl.s, FF_STYLE_OWN);
+    pl.s.bpm = 176; pl.s.rubato = 35; pl.s.legato = 25; pl.s.touch = 40; pl.s.accent = 50; pl.s.pedal = FF_PED_SCORE;
     /* VARIATIONS */
     press(FU_B_ARP);
     CHECK(ui.page == FU_PG_VAR, "ARP: VARIATIONS");
@@ -241,6 +275,24 @@ int main(int argc, char **argv)
     CHECK(ui.page == FU_PG_MENU, "HOME held: MENU");
     shot("menu");
     all_palettes("menu");
+    fu_knob(&ui, FU_K3, 1);
+    CHECK(pl.s.view == FF_VIEW_SCORE, "VIEW SCORE");
+    fu_knob(&ui, FU_K4, 2);
+    CHECK(pl.s.pitch == FF_PITCH_430, "PITCH 430");
+    shot("menu_score");
+    press(FU_B_HOME);
+    if (!pl.playing) press(FU_B_PLAY);
+    CHECK(pl.playing, "playing for the score");
+    run_ms(900);
+    shot("home_score");
+    all_palettes("home_score");
+    ff_goto_bar(&pl, 34);
+    run_ms(2600);
+    shot("home_score_34");
+    press(FU_B_PLAY);
+    fu_button(&ui, FU_B_HOME, true); run_ms(700); fu_button(&ui, FU_B_HOME, false);
+    fu_knob(&ui, FU_K3, -1);
+    fu_knob(&ui, FU_K4, -2);
     press(FU_B_HOME);
     CHECK(ui.page == FU_PG_HOME, "HOME: home");
     /* the PRESETS list over the page; ALGORITHM to a bar; OCT */
@@ -252,7 +304,7 @@ int main(int argc, char **argv)
     shot("goto");
     press(FU_B_OCTUP);
     CHECK(ff_bar(&pl) >= 2, "OCT+ (%d)", ff_bar(&pl));
-    press(FU_B_FX);
+    press(FU_B_SCL);
     shot("not_used");
     CHECK(lint_findings == 0, "the layout lint: %d findings", lint_findings);
     printf("ff_ui: %d checks, %d failed, %d frames, %d notes on\n", checks, fails, frames_written, notes_on);

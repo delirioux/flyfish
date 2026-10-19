@@ -24,7 +24,10 @@ static const ffs_sound FFS_SOUND[FF_SOUNDS] = {
     {FFS_PHYS, 4},      /* KALIMBA */
     {FFS_FM6, 5},       /* MARIMBA */
     {FFS_ANALOG, 5},    /* SINE KEY */
+    {FFS_SAMPLE, 0},    /* PLEYEL: the same Steinway, voiced as an 1840s Pleyel (ffs_track): darker, a quicker decay,
+                         * a lighter touch. A voicing, not a recording of a Pleyel */
 };
+#define FFS_PLEYEL 8
 
 /* the reverb spaces: SIZE and DAMP on Felucca's ROOM model, as Tuna's */
 static const uint8_t FFS_SPACE[FF_SPACE_COUNT][2] = {{71, 48}, {86, 45}, {97, 30}};
@@ -54,6 +57,8 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int k, int16_t ba
     t->p[P_SPRD] = 0;
     /* DECAY: the preset's own decay and release, scaled 0.4x .. 2x around 60 */
     int f = s->decay < 60 ? 40 + s->decay : 100 + (s->decay - 60) * 100 / 40;   /* percent */
+    if (s->sound == FFS_PLEYEL)
+        f = f * 62 / 100;                        /* PLEYEL: lighter strings, a quicker decay */
     t->p[P_DEC] = ffs_clamp(base_dec * f / 100);
     t->p[P_REL] = ffs_clamp(base_rel * f / 100);
     /* the pedal: the figures let go of their keys at once (ff_player.c release_after) and ring on in a long release,
@@ -65,17 +70,41 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int k, int16_t ba
      * physical engines have theirs, so less there) */
     t->p[P_M4SRC] = 3;                           /* MS_VEL */
     t->p[P_M4DST] = 4;                           /* MD_AMP */
-    t->p[P_M4AMT] = (int16_t)(t->engine == FFS_SAMPLE || t->eng_req == FFS_SAMPLE ? 64 : 36);
-    /* BRIGHT: the INSERT's CRUSH at 16 bits and the full rate is clean: its low-pass alone (100: off) */
-    if (s->bright >= 96) {
+    t->p[P_M4AMT] = (int16_t)(s->sound == FFS_PLEYEL ? 50 : t->engine == FFS_SAMPLE || t->eng_req == FFS_SAMPLE ? 64 : 36);
+    /* BRIGHT: the INSERT's CRUSH at 16 bits and the full rate is clean: its low-pass alone (100: off). PLEYEL and
+     * SOFT (una corda) darker */
+    int lpf = 56 + s->bright * 70 / 100 - (s->sound == FFS_PLEYEL ? 16 : 0) - (s->soft ? 12 : 0);
+    if (s->bright >= 96 && lpf >= 123) {
         t->p[P_ITYPE] = 0;
     } else {
         t->p[P_ITYPE] = 5;                       /* IT_CRUSH */
         t->p[P_IA] = 127;                        /* 16 bits */
         t->p[P_IB] = 127;                        /* the full rate */
-        t->p[P_IC] = ffs_clamp(56 + s->bright * 70 / 100);   /* LPF */
+        t->p[P_IC] = ffs_clamp(lpf);             /* LPF */
         t->p[P_IMIX] = 127;
     }
+}
+
+/* the tuning: a note's temperament as its voices' fine pitch (1/4096 of the phase increment: 1 cent = 2.367); the
+ * concert pitch is Felucca's TUNE (song.g[G_TUNE], cents) */
+static inline int32_t ffs_fine(const ff_settings *s, int note)
+{
+    float c = ff_temper_ct(s, note % 12) * 2.367f;
+    return (int32_t)(c < 0 ? c - 0.5f : c + 0.5f);
+}
+static inline void ffs_note_on(track_t *t, const ff_settings *s, uint32_t note, uint32_t vel)
+{
+    trk_note_on(t, note, vel);
+    int32_t fine = ffs_fine(s, (int)note);
+    if (fine)
+        for (uint32_t i = 0; i < NVOICE; i++)       /* (the voice just started on this note: POLY, no unison) */
+            if (t->v[i].gate && t->v[i].note == note)
+                t->v[i].fine = fine;
+}
+static inline int16_t ffs_tune(const ff_settings *s)
+{
+    float c = ff_pitch_ct(s);
+    return (int16_t)(c < 0 ? c - 0.5f : c + 0.5f);
 }
 
 #endif

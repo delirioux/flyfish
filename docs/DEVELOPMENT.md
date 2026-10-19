@@ -83,6 +83,28 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
 - **The keys only play.** FREE plays along, TAP makes the player the rhythm, WAIT holds the music for the right
   note (any octave, since the right hand reaches E7 and the keys stop at G5); the key LEDs show the note to find,
   else the right hand running across the keys.
+- **Practising as teachers do.** RHYTHM changes the sixteenths' lengths in pairs (3:1 or 1:3, the bar's length
+  kept) or moves the accent within each group; CHORDS gives each group of four as one chord on its first
+  sixteenth (each pitch once, the held bass at its own step), so WAIT asks for the hand's shape.
+- **The progress chart.** Only WAIT with a hand left out counts: a bar played from its line to its last sixteenth
+  with no wrong key keeps the best SPEED it was played at; each wrong key counts against its bar. Its own record
+  ("FFP1") in Felucca's second project object, saved when the player stops (never while playing).
+- **Temperaments as cents, tuned to A.** Werckmeister III, Kirnberger III and Vallotti as offsets from equal
+  temperament, shifted so A stays at 0 (the PITCH stays the pitch). They reach each voice as its `fine` pitch
+  (1/4096 of the phase increment); Felucca's SAMPLE engine ignored `fine` (it steps in 1/16 semitones), so
+  `eng_sample.c` now applies it, which also makes TUNE's residual below 1/16 semitone exact on samples. PITCH is
+  Felucca's TUNE (cents). The resonator's strings follow both (`tr_cents` in `tuna_reso.c`). Measured on the host:
+  C4 in Werckmeister at 430 sits 25 cents under equal at 440 (expected 28; the window mixes partials).
+- **STYLE presets, then the player's own.** A STYLE writes tempo, rubato, touch, accent, pedal and legato; turning
+  any of them by hand makes it OWN again, so the card never claims a reading that is not playing.
+- **PLEYEL is a voicing.** The same Steinway samples, darker (the insert's low-pass 16 lower), a 38 % quicker decay
+  and a lighter VEL -> AMP: in the spirit of an 1840s Pleyel, not a recording of one. SOFT (una corda) is velocity
+  x 0.82 and the low-pass 12 lower.
+- **The score on 240 pixels.** One bar on two staves, 6 px between lines; a group of four shifts as one under 8va
+  or 15ma (above C6) or 8vb (below E2), as the printed score does, so no ledger tower climbs out of the panel.
+- **The pedals over MIDI.** CC64 is lifted where Flyfish's pedal changes and put down 30 ms later (a legato pedal
+  a piano on the far end can follow), 64 for HALF; CC67 follows SOFT. Temperament and pitch are not sent (that
+  would take MIDI Tuning messages most pianos ignore).
 - **No libm, no doubles**: floats on the FPU (`-mcpu=r3 -mfprev1`), `sinf` and `lrintf` from `tuna_libm.c`.
 - **Settings save themselves while stopped**, two seconds after the last change, in Felucca's first project
   object (the flash is the code's: writing it while playing would stall the audio).

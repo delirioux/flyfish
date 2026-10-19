@@ -12,11 +12,11 @@
  *   REC        the loop FROM .. TO on and off
  *   OCT- OCT+  a bar back / on, at once
  *   keys       music only: play along (FREE), the next note (TAP), the note the music waits for (WAIT)
- *   HOME       the waterfall; held: the menu (colour, style)
+ *   HOME       the waterfall (or the score: MENU's VIEW); held: the menu (COLOR LOOK VIEW PITCH)
  *   EDIT       the sound              GLO   the mix and the space
- *   SEQ        practice, again: practice 2 (MODE RAMP CLICK COUNT)
+ *   SEQ        practice, again: practice 2 (MODE RAMP CLICK COUNT), again: practice 3 (RHYTHM CHORDS SHOW ERASE)
  *   ARP        variations: KEY MODE BASS ROUNDS (1 .. 16 or INF, the seam at bar 48)
- *   FX         fingers: LEGATO (how long each note of the figures overlaps the next)
+ *   FX         piano: STYLE LEGATO SOFT TUNING
  *   SCL ENV LFO SAVE: not used (the settings save themselves while stopped) */
 #ifndef FF_UI_H
 #define FF_UI_H
@@ -34,7 +34,8 @@ enum {
     FU_B_HOME, FU_B_SAVE, FU_B_ARP, FU_B_SEQ, FU_B_PLAY, FU_B_REC,
     FU_B_OCTDN, FU_B_OCTUP, FU_BUTTONS
 };
-enum { FU_PG_HOME, FU_PG_SOUND, FU_PG_PRACTICE, FU_PG_PRACTICE2, FU_PG_VAR, FU_PG_MIX, FU_PG_MENU, FU_PG_FINGERS, FU_PAGES };
+enum { FU_PG_HOME, FU_PG_SOUND, FU_PG_PRACTICE, FU_PG_PRACTICE2, FU_PG_VAR, FU_PG_MIX, FU_PG_MENU, FU_PG_PIANO,
+       FU_PG_PRACTICE3, FU_PAGES };
 #define FU_KEY_LO 53                      /* F3: the FM-1's lowest key */
 #define FU_KEY_HI 79                      /* G5 */
 #define FU_DROPS 64
@@ -62,6 +63,7 @@ typedef struct {
     uint32_t rnd;
     uint32_t frame;
     int batt;                             /* 0..3 bars, 4 = USB power */
+    int erase_ms;                         /* ERASE turned once: a second turn within this erases */
     bool changed;                         /* a setting changed: the glue applies it (sound, mix) and saves it later */
     uint32_t sig_head, sig_card[4], sig_foot;
     bool force;

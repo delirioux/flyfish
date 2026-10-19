@@ -27,12 +27,20 @@ that music in a pocket synth, to play it, to learn it, to make it fall like wate
 - **Practise.** SPEED down to 25 %, a loop of any bars (REC), RAMP to speed up a little every round, a CLICK and a
   bar's count-in. Leave a hand out (YOU) and play it yourself: FREE along with the music, TAP (each key plays the
   next note: you are the rhythm) or WAIT (the music waits for the right note, any octave; the keys light up).
+  Practise it the way teachers drill it: RHYTHM in dotted pairs (LONG-SHORT, SHORT-LONG) or with the accent on the
+  2nd, 3rd or 4th note of each group, and CHORDS, each group of four as one chord, to learn the hand's shapes before
+  the run. In WAIT, a chart keeps each bar's best clean SPEED and its wrong keys, from SPEED 25 % to 100 %.
 - **Move it.** The notes are always Chopin's. Move them to another KEY, play them in MINOR, DORIAN or LYDIAN,
   change the BASS, and let it go ROUNDS: 1 to 16 times or INF (endless), through a seam you will not hear (bar 48
   runs into bar 1 as it runs into the recapitulation, which is bar 1 again).
+- **Chopin's piano.** A STYLE sets a whole reading at once: CLASSIC, ROMANTIC, VIRTUOSO or NOCTURNE. TUNING plays it
+  in equal temperament or in the well temperaments of Chopin's time (Werckmeister III, Kirnberger III, Vallotti), at
+  A = 440, 435 (the diapason normal of 1859) or 430 Hz; SOFT is the una corda; PLEYEL voices the Steinway after the
+  piano Chopin played. The screen names the harmony in Roman numerals (V7/V, viio7/ii), and can show the bar as a
+  score (MENU: VIEW).
 
-Eight sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
-SINE KEY; three spaces of reverb (CATHEDRAL at 25 % to start); ten colours.
+Nine sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
+SINE KEY, PLEYEL (the Steinway voiced darker, quicker and lighter: a voicing, not a recording of a Pleyel); three spaces of reverb (CATHEDRAL at 25 % to start); ten colours.
 
 ## The controls
 
@@ -46,15 +54,17 @@ SINE KEY; three spaces of reverb (CATHEDRAL at 25 % to start); ten colours.
 | PLAY | start / stop |
 | REC | the loop FROM .. TO on and off |
 | OCT- / OCT+ | a bar back / on |
-| HOME | the waterfall; hold it: the menu (colour, style) |
+| HOME | the waterfall (or the score); hold it: the menu (COLOR LOOK VIEW PITCH) |
 | EDIT | sound: SOUND BRIGHT DECAY WIDTH |
-| SEQ | practice: SPEED FROM TO YOU; again: MODE RAMP CLICK COUNT |
+| SEQ | practice: SPEED FROM TO YOU; again: MODE RAMP CLICK COUNT; again: RHYTHM CHORDS SHOW ERASE (the chart; turned twice) |
 | ARP | variations: KEY MODE BASS ROUNDS |
 | GLO | mix: RIGHT LEFT REVERB SPACE |
-| FX | fingers: LEGATO (how far each note of the figures overlaps the next: 0 none, 100 three notes; best heard with PEDAL DRY) |
+| FX | piano: STYLE, LEGATO (how far each note of the figures overlaps the next: 0 none, 100 three notes; best heard with PEDAL DRY), SOFT, TUNING |
 | keys | music only: playing along, tapping, finding the note |
 
-MIDI out: the right hand on channel 1, the left on 2, the keys on 3. The settings save themselves while stopped.
+MIDI out: the right hand on channel 1, the left on 2, the keys on 3; the sustain pedal (CC64, lifted where the bass
+changes and put down again 30 ms later) and the soft pedal (CC67) on 1 and 2, so Flyfish can play a real piano. The
+temperament and pitch stay in Flyfish's own sound. The settings save themselves while stopped.
 
 ## The notes
 

@@ -36,6 +36,7 @@ typedef struct {
     int32_t amount;                            /* Q15: the strings into the mix */
     int32_t bright;                            /* Q15: the loop filter's coefficient */
     float decay_s;                             /* RT60 of a string at 220 Hz, seconds */
+    float ct[12];                              /* (Flyfish) each pitch class's offset in cents: the temperament, the pitch */
 } tr_reso;
 
 void tr_init(tr_reso *r, float sample_rate);
@@ -43,6 +44,8 @@ void tr_init(tr_reso *r, float sample_rate);
 void tr_set(tr_reso *r, float amount, float decay, float bright);
 /* the strings' notes (MIDI; n up to TR_STRINGS, the rest off); unchanged notes keep ringing */
 void tr_tune(tr_reso *r, const int *notes, int n);
+/* (Flyfish) the strings' tuning: cents for C .. B (a temperament, the concert pitch); the strings sounding retune */
+void tr_cents(tr_reso *r, const float *ct12);
 /* the notes a mode wants: from the key's tonic (pitch class), the chord's root and tones (semitones above the
  * tonic, as tt_chord) */
 int tr_notes_for(int mode, int tonic, int chord_root, const int8_t *tones, int ntones, int *notes);

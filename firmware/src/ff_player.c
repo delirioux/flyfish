@@ -13,7 +13,7 @@ static float clampf(float v, float lo, float hi) { return v < lo ? lo : v > hi ?
 static const char *const NOTE_NAMES[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *ff_note_name(int pc) { return NOTE_NAMES[((pc % 12) + 12) % 12]; }
 static const char *const SOUND_NAMES[FF_SOUNDS] = {"GRAND", "TINE EP", "HARP", "CELESTA", "MUSIC BOX", "KALIMBA",
-                                                   "MARIMBA", "SINE KEY"};
+                                                   "MARIMBA", "SINE KEY", "PLEYEL"};
 const char *ff_sound_name(int i) { return SOUND_NAMES[((i % FF_SOUNDS) + FF_SOUNDS) % FF_SOUNDS]; }
 
 /* ---- settings ---------------------------------------------------------------------------------------------- */
@@ -27,6 +27,8 @@ void ff_defaults(ff_settings *s)
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->rounds = 0;   /* INF */
     s->right = 65; s->left = 65; s->reverb = 25; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0; s->legato = 25;
+    s->interp = FF_STYLE_OWN; s->soft = 0; s->tuning = FF_TUNE_EQUAL; s->view = FF_VIEW_WATERFALL; s->pitch = FF_PITCH_440;
+    s->rhythm = FF_RHY_EVEN; s->chords = 0; s->show = 0;
 }
 
 void ff_settings_fix(ff_settings *s)
@@ -46,6 +48,46 @@ void ff_settings_fix(ff_settings *s)
     s->space = (uint8_t)(s->space % FF_SPACE_COUNT); s->bpm = (uint8_t)clampi(s->bpm, 40, 240);
     s->palette = (uint8_t)(s->palette % 10u); s->style = (uint8_t)(s->style % 2u);
     s->legato = (uint8_t)clampi(s->legato, 0, 100);
+    s->interp = (uint8_t)(s->interp % FF_STYLE_COUNT); s->soft = (uint8_t)(s->soft % 2u);
+    s->tuning = (uint8_t)(s->tuning % FF_TUNE_COUNT); s->view = (uint8_t)(s->view % FF_VIEW_COUNT);
+    s->pitch = (uint8_t)(s->pitch % FF_PITCH_COUNT); s->rhythm = (uint8_t)(s->rhythm % FF_RHY_COUNT);
+    s->chords = (uint8_t)(s->chords % 2u); s->show = (uint8_t)(s->show % 2u);
+}
+
+/* ---- STYLE: four readings (tempo, rubato, touch, accent, pedal, legato) ---------------------------------------- */
+static const uint8_t STYLES[FF_STYLE_COUNT][6] = {
+    {0, 0, 0, 0, 0, 0},                                          /* OWN: what the player set */
+    {168, 15, 35, 45, FF_PED_HALF, 15},                          /* CLASSIC: strict, the pedal light, clean */
+    {160, 70, 55, 55, FF_PED_SCORE, 45},                         /* ROMANTIC: broad rubato, the waves sung */
+    {184, 25, 45, 65, FF_PED_SCORE, 10},                         /* VIRTUOSO: faster than written, bright accents */
+    {112, 55, 25, 30, FF_PED_WASH, 60},                          /* NOCTURNE: slow, soft, in a haze */
+};
+void ff_style_apply(ff_settings *s, int style)
+{
+    style = ((style % FF_STYLE_COUNT) + FF_STYLE_COUNT) % FF_STYLE_COUNT;
+    s->interp = (uint8_t)style;
+    if (style == FF_STYLE_OWN)
+        return;
+    const uint8_t *v = STYLES[style];
+    s->bpm = v[0]; s->rubato = v[1]; s->touch = v[2]; s->accent = v[3]; s->pedal = v[4]; s->legato = v[5];
+}
+
+/* ---- TUNING and PITCH: cents from equal temperament for C .. B, C at 0 (tuned to A in ff_temper_ct) ------------- */
+static const float TEMPER[FF_TUNE_COUNT][12] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, -9.78f, -7.82f, -5.87f, -9.78f, -1.96f, -11.73f, -3.91f, -7.82f, -11.73f, -3.91f, -7.82f},   /* Werckmeister III */
+    {0, -9.78f, -6.84f, -5.87f, -13.69f, -1.96f, -9.78f, -3.42f, -7.82f, -10.27f, -3.91f, -11.73f},  /* Kirnberger III */
+    {0, -5.87f, -3.91f, -1.96f, -7.82f, 1.96f, -7.82f, -1.96f, -3.91f, -5.87f, 0, -9.78f},          /* Vallotti */
+};
+float ff_temper_ct(const ff_settings *s, int pc)
+{
+    const float *t = TEMPER[s->tuning % FF_TUNE_COUNT];
+    return t[((pc % 12) + 12) % 12] - t[9];
+}
+float ff_pitch_ct(const ff_settings *s)
+{
+    static const float CT[FF_PITCH_COUNT] = {0.0f, -19.8f, -39.8f};   /* 1200 log2(f / 440) */
+    return CT[s->pitch % FF_PITCH_COUNT];
 }
 
 /* ---- the notes as they play now ------------------------------------------------------------------------------ */
@@ -64,10 +106,28 @@ static int map_mode(const ff_settings *s, int n)
     return n - pc + to + s->key;
 }
 
+/* CHORDS: the figures' notes of the group of four starting at st as one chord (each pitch once), held the group */
+static int group_chord(const ff_settings *s, int st, ff_shown *out, int max)
+{
+    int n = 0, end = st + 4 < FF_STEPS ? st + 4 : FF_STEPS;
+    for (int i = FF_FIRST[st]; i < FF_FIRST[end] && n < max; ++i) {
+        const ff_note *x = &FF_NOTES[i];
+        if (x->len >= 8)
+            continue;                                  /* (the held bass: at its own step) */
+        int note = clampi(map_mode(s, n_note(x)), 12, 120), dup = 0;
+        for (int k = 0; k < n; ++k) dup |= out[k].note == note;
+        if (!dup)
+            out[n++] = (ff_shown){(uint16_t)st, (uint8_t)(end - st), (uint8_t)note, (uint8_t)n_hand(x), 0};
+    }
+    return n;
+}
+
 /* the notes starting at sixteenth s as they play now: up to max, in out */
 static int step_notes(const ff_settings *s, int st, ff_shown *out, int max)
 {
     int n = 0, a = FF_FIRST[st], b = FF_FIRST[st + 1];
+    if (s->chords && st % 4 == 0)
+        n = group_chord(s, st, out, max);
     int lowest = 128, nheld = 0;
     for (int i = a; i < b; ++i)
         if (n_hand(&FF_NOTES[i]) == 1 && FF_NOTES[i].len >= 8) {
@@ -77,6 +137,8 @@ static int step_notes(const ff_settings *s, int st, ff_shown *out, int max)
     for (int i = a; i < b && n < max; ++i) {
         const ff_note *x = &FF_NOTES[i];
         int h = n_hand(x), note = n_note(x);
+        if (s->chords && x->len < 8)
+            continue;                                  /* (in the group's chord) */
         if (h == 1 && x->len >= 8) {
             if (s->bass == FF_BASS_NONE) continue;
             if (s->bass == FF_BASS_SINGLE && nheld > 1 && note == lowest) continue;
@@ -137,8 +199,9 @@ static int velocity(const ff_settings *s, const ff_shown *e, bool recap)
     }
     if (e->hand == 0) {
         v += ph < 16 ? 0.09f * ((float)ph / 15.0f) : 0.09f * (1.0f - (float)(ph - 16) / 15.0f);   /* each wave */
-        if (e->step % 4 == 0)
-            v += 0.12f * (float)s->accent / 100.0f;                 /* the accent on each group's first note */
+        int at = s->rhythm >= FF_RHY_ACC2 ? s->rhythm - FF_RHY_ACC2 + 1 : 0;   /* RHYTHM ACC 2..4: moved */
+        if (e->step % 4 == at)
+            v += (at ? 0.2f : 0.12f) * (float)(at && s->accent < 50 ? 50 : s->accent) / 100.0f;
         if (FF_TOP[e->step / 32] == e->step)
             v += 0.1f * (float)s->accent / 100.0f;                  /* the wave's crest */
     } else {
@@ -147,6 +210,8 @@ static int velocity(const ff_settings *s, const ff_shown *e, bool recap)
     v = 0.72f + (v - 0.72f) * ((float)s->touch / 60.0f);
     v *= 1.0f + sinf((float)e->step * 12.9898f + (float)e->note) * 0.5f * 0.04f * (float)s->rubato / 100.0f;
     v = clampf(v, 0.15f, 1.0f);
+    if (s->soft)
+        v *= 0.82f;                                                 /* SOFT: una corda, one string less */
     v *= (float)(e->hand == FF_HAND_L ? s->left : s->right) / 100.0f;   /* RIGHT, LEFT: the hands share a track */
     return clampi((int)(v * 127.0f + 0.5f), 1, 127);
 }
@@ -162,6 +227,10 @@ static float step_dur(const ff_settings *s, int st)
     else if (ph <= 18) shape = 0.12f * (1.0f - (float)(ph > 16 ? ph - 16 : 16 - ph) / 3.0f);
     else if (ph >= 28) shape = 0.07f * (float)(ph - 27) / 4.0f;
     d *= 1.0f + R * shape;
+    if (s->rhythm == FF_RHY_LONG_SHORT && !s->chords)       /* dotted pairs: three quarters and a quarter of two */
+        d *= st % 2 == 0 ? 1.5f : 0.5f;
+    else if (s->rhythm == FF_RHY_SHORT_LONG && !s->chords)
+        d *= st % 2 == 0 ? 0.5f : 1.5f;
     if (st >= 76 * 16 && st < FF_END - 16) {
         float x = (float)(st - 76 * 16) / 32.0f;
         d *= 1.0f + (0.28f + 0.6f * R) * x * x;
@@ -276,6 +345,36 @@ static void pedal_follow(ff_player *p, int st)
     p->pedal_down = p->s.pedal != FF_PED_DRY;
 }
 
+/* the progress (WAIT, a hand left out): a bar played from its line to its last sixteenth without a wrong key keeps
+ * the best SPEED it was played at */
+static void progress_close(ff_player *p)
+{
+    if (p->prog_last >= 0 && p->prog_last % 16 == 15 && p->bar_from == p->prog_last / 16 && !p->bar_err &&
+        p->bar_from < FF_BARS_N && p->s.speed > p->best[p->bar_from]) {
+        p->best[p->bar_from] = p->s.speed;
+        p->progress_new = 1;
+    }
+    p->bar_from = -1;
+    p->prog_last = -1;
+}
+static void progress_step(ff_player *p, int st)
+{
+    if (st % 16 == 0 || st != p->prog_last + 1) {
+        progress_close(p);
+        p->bar_from = st % 16 == 0 ? st / 16 : -1;
+        p->bar_err = false;
+    }
+    p->prog_last = st;
+}
+void ff_progress_erase(ff_player *p)
+{
+    memset(p->best, 0, sizeof p->best);
+    memset(p->miss, 0, sizeof p->miss);
+    p->bar_from = -1;
+    p->prog_last = -1;
+    p->progress_new = 1;
+}
+
 /* sixteenth st: every note but the player's hand */
 static void play_step(ff_player *p, int st, int skip_hand)
 {
@@ -351,6 +450,8 @@ void ff_player_init(ff_player *p, float sample_rate)
     p->sr = sample_rate;
     p->cur = -1;
     p->pedal_idx = -1;
+    p->bar_from = -1;
+    p->prog_last = -1;
 }
 
 void ff_set_sound(ff_player *p, void (*fn)(void *ctx, const ff_event *e), void *ctx)
@@ -390,6 +491,8 @@ void ff_play(ff_player *p, bool on)
         p->jump = 0;
         p->cur = -1;
         p->pedal_idx = -1;
+        p->bar_from = -1;
+        p->prog_last = -1;
         p->count_left = p->s.count && p->s.mode != FF_MODE_TAP ? 4 : 0;
         p->count_wait = 0.0f;
         p->playing = true;
@@ -399,6 +502,8 @@ void ff_play(ff_player *p, bool on)
         p->waiting = false;
         p->count_left = 0;
         if (p->cur >= 0) p->pos = p->cur / 16 * 16;
+        p->prog_last = -1;
+        p->bar_from = -1;
         ff_all_off(p);
     }
 }
@@ -491,6 +596,10 @@ void ff_key(ff_player *p, int note, bool down)
             }
             return;
         }
+        int wb = p->want_step / 16;                    /* the progress: a wrong key in this bar */
+        if (wb < FF_BARS_N && p->miss[wb] < 255) p->miss[wb]++;
+        p->bar_err = true;
+        p->progress_new = 1;
         char m[24] = "NOT ";
         const char *nm = ff_note_name(pc);
         int i = 4;
@@ -534,12 +643,15 @@ void ff_process(ff_player *p, int frames)
             while (p->wait <= 0.0f && p->playing && !p->waiting) {
                 int st = wrap(p, p->pos);
                 if (st < 0) {
+                    if (p->s.mode == FF_MODE_WAIT && you >= 0) progress_close(p);
                     p->playing = false;
                     p->ended = true;
                     p->pos = 0;
                     break;
                 }
                 p->pos = st;
+                if (p->s.mode == FF_MODE_WAIT && you >= 0)
+                    progress_step(p, st);
                 if (p->s.mode == FF_MODE_WAIT && you >= 0 && has_hand(p, st, you)) {
                     play_step(p, st, you);
                     ff_shown ev[16];
@@ -620,4 +732,50 @@ int ff_next_pcs(const ff_player *p, int st, int *pcs, int max)
             }
     }
     return n;
+}
+
+/* the harmony in Roman numerals, read in C whatever the KEY (a numeral names a degree, not a pitch): upper case
+ * major, lower case minor and diminished; a dominant seventh that resolves to a degree other than I is named by
+ * where it goes (V7/V), a diminished seventh likewise (viio7/ii); inversions as figures (6, 64; 65, 43, 42) */
+void ff_roman(const ff_player *p, int bar, char *out, int max)
+{
+    static const char *const UP[12] = {"I", "bII", "II", "bIII", "III", "IV", "#IV", "V", "bVI", "VI", "bVII", "VII"};
+    static const char *const LO[12] = {"i", "bii", "ii", "biii", "iii", "iv", "#iv", "v", "bvi", "vi", "bvii", "vii"};
+    static const char *const TO[12] = {0, 0, "ii", 0, "iii", "IV", 0, "V", 0, "vi", 0, 0};
+    int k = 0;
+    out[0] = 0;
+    if (bar < 1 || bar > FF_BARS || FF_CHORD[bar - 1][0] == 255 || p->s.scale != FF_SCALE_SCORE || max < 16)
+        return;
+    int root = FF_CHORD[bar - 1][0] % 12, q = FF_CHORD[bar - 1][1], bass = FF_CHORD[bar - 1][2] % 12;
+    int iv = ((bass - root) % 12 + 12) % 12;
+    bool minor = q == 1 || q == 4 || q == 5 || q == 6 || q == 8, seventh = q >= 2 && q != 8 && q != 9;
+    bool dom = q == 2 || q == 7 || q == 10, dim7 = q == 5;
+    const char *num = minor ? LO[root] : UP[root], *to = 0;
+    char fig[4] = {0};
+    if (iv == 3 || iv == 4) { fig[0] = '6'; if (seventh) fig[1] = '5'; }
+    else if (iv >= 6 && iv <= 8) { if (seventh) { fig[0] = '4'; fig[1] = '3'; } else { fig[0] = '6'; fig[1] = '4'; } }
+    else if (iv >= 9) { fig[0] = '4'; fig[1] = '2'; }
+    if (dom && root != 7 && TO[(root + 5) % 12]) {           /* a secondary dominant: V of where it goes */
+        num = "V";
+        to = TO[(root + 5) % 12];
+    } else if (dim7 && root != 11 && TO[(root + 1) % 12]) {  /* a leading-note seventh of another degree */
+        num = "vii";
+        to = TO[(root + 1) % 12];
+    } else if (dim7) {
+        num = "vii";
+    }
+    const char *qs = q == 8 ? "o" : q == 9 ? "+" : "";
+    const char *sev = !seventh ? "" : dim7 ? "o7" : q == 6 ? "7b5" : q == 3 ? "M7" : q == 7 ? "7b9" : q == 10 ? "9" : "7";
+#define PUT(str) for (const char *c_ = (str); *c_ && k < max - 1; ) out[k++] = *c_++
+    PUT(num);
+    PUT(qs);
+    if (fig[0]) {
+        if (dim7) PUT("o");
+        PUT(fig);
+    } else {
+        PUT(sev);
+    }
+    if (to) { PUT("/"); PUT(to); }
+#undef PUT
+    out[k] = 0;
 }

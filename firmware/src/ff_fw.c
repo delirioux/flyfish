@@ -30,6 +30,7 @@ static int16_t ff_base_dec[3], ff_base_rel[3];
 static uint32_t ff_reso_sig = 0xFFFFFFFFu;
 static int32_t ff_reso_amt = -1;
 static volatile uint8_t ff_last_rh = 0xFF;                   /* the right hand's latest note (the key LEDs) */
+static uint8_t ff_tuned_t = 0xFF, ff_tuned_p = 0xFF;            /* the tuning the resonator was given */
 
 /* ---- the audio ISR --------------------------------------------------------------------------------------------- */
 static void ff_sound(void *ctx, const ff_event *e)
@@ -37,7 +38,10 @@ static void ff_sound(void *ctx, const ff_event *e)
     (void)ctx;
     uint32_t tr = ffs_track_of(e->hand, e->note), h = e->hand & 3u;
     if (e->on) {
-        trk_note_on(&trk[tr], e->note, e->vel);
+        if (tr < 3u)
+            ffs_note_on(&trk[tr], &ff_pl.s, e->note, e->vel);  /* (the temperament: the voice's fine pitch) */
+        else
+            trk_note_on(&trk[tr], e->note, e->vel);
         if (h == FF_HAND_R) ff_last_rh = e->note;
     } else if (tr != 3u) {
         trk_note_off(&trk[tr], e->note);                     /* (a click plays on through its decay) */
@@ -48,9 +52,47 @@ static void ff_sound(void *ctx, const ff_event *e)
     }
 }
 
+/* MIDI out, the pedals: the sustain (CC64) follows Flyfish's pedal, lifted where the bass changes and put down
+ * again 30 ms later (a pianist's legato pedal, so a piano on the other end catches it), half way for HALF; the
+ * soft pedal (CC67) follows SOFT. On channels 1 and 2, the hands' */
+static uint32_t ff_ped_sig = 0xFFFFFFFFu;
+static int32_t ff_ped_down_in = -1;
+static uint8_t ff_ped_val = 0, ff_soft_val = 0xFF;
+static void ff_midi_cc(uint32_t cc, uint32_t v)
+{
+    for (uint32_t ch = 0; ch < 2u; ch++)
+        midi_out_event(0x0Bu | (0xB0u | ch) << 8 | cc << 16 | v << 24);
+}
+static void ff_midi_pedals(uint32_t n)
+{
+    uint8_t want = !ff_pl.playing || ff_pl.s.pedal == FF_PED_DRY ? 0u : ff_pl.s.pedal == FF_PED_HALF ? 64u : 127u;
+    if (ff_pl.pedal_sig != ff_ped_sig) {
+        ff_ped_sig = ff_pl.pedal_sig;
+        if (ff_ped_val) {
+            ff_midi_cc(64u, 0u);
+            ff_ped_val = 0;
+        }
+        ff_ped_down_in = want ? (int32_t)(FS * 3u / 100u) : -1;
+    }
+    if (ff_ped_down_in >= 0 && (ff_ped_down_in -= (int32_t)n) < 0 && want) {
+        ff_midi_cc(64u, want);
+        ff_ped_val = want;
+    }
+    if (ff_ped_val && ff_ped_val != want && ff_ped_down_in < 0) {   /* stopped, or the pedal mode changed */
+        ff_midi_cc(64u, want);
+        ff_ped_val = want;
+    }
+    uint8_t soft = ff_pl.s.soft ? 127u : 0u;
+    if (soft != ff_soft_val) {
+        ff_midi_cc(67u, soft);
+        ff_soft_val = soft;
+    }
+}
+
 static void ff_audio_pre(uint32_t n)
 {
     ff_process(&ff_pl, (int)n);
+    ff_midi_pedals(n);
     if (ff_pl.pedal_sig != ff_reso_sig) {                    /* a new pedal: the strings retune (they glide) */
         int notes[6], k = ff_reso_notes(&ff_pl, notes);
         tr_tune(&ff_reso, notes, k);
@@ -111,6 +153,30 @@ static void ff_settings_load(void)
     }
 #endif
 }
+/* the progress chart (PRACTICE 3): its own record in the second project object, saved as the settings are */
+#define FF_PROG_MAGIC 0x31504646u                            /* "FFP1" */
+typedef struct { uint32_t magic; uint8_t best[FF_BARS_N], miss[FF_BARS_N]; } ff_prog_rec;
+static void ff_progress_load(void)
+{
+#if FELUCCA_FLASH
+    ff_prog_rec r;
+    memset(&r, 0, sizeof r);
+    if (st_load(OBJ_PROJECT0 + 1u, &r, sizeof r) == (int)sizeof r && r.magic == FF_PROG_MAGIC) {
+        memcpy(ff_pl.best, r.best, sizeof r.best);
+        memcpy(ff_pl.miss, r.miss, sizeof r.miss);
+    }
+#endif
+}
+static void ff_progress_save(void)
+{
+#if FELUCCA_FLASH
+    ff_prog_rec r;
+    r.magic = FF_PROG_MAGIC;
+    memcpy(r.best, ff_pl.best, sizeof r.best);
+    memcpy(r.miss, ff_pl.miss, sizeof r.miss);
+    st_save(OBJ_PROJECT0 + 1u, &r, sizeof r);
+#endif
+}
 static void ff_settings_save(void)
 {
 #if FELUCCA_FLASH
@@ -153,7 +219,18 @@ static void ff_apply(void)
         song.g[G_RSIZE] = FFS_SPACE[s->space % FF_SPACE_COUNT][0];
         song.g[G_RDAMP] = FFS_SPACE[s->space % FF_SPACE_COUNT][1];
         song.g[G_RTYPE] = 0;                                 /* (Felucca's ROOM model, sized as Tuna's) */
+        song.g[G_TUNE] = ffs_tune(s);                        /* PITCH: A = 440, 435, 430 */
         fm1_irq_on();
+    }
+    if (s->tuning != ff_tuned_t || s->pitch != ff_tuned_p) {   /* the resonator's strings: the same tuning */
+        float ct[12];
+        for (int i = 0; i < 12; ++i)
+            ct[i] = ff_temper_ct(s, i) + ff_pitch_ct(s);
+        fm1_irq_off();
+        tr_cents(&ff_reso, ct);
+        fm1_irq_on();
+        ff_tuned_t = s->tuning;
+        ff_tuned_p = s->pitch;
     }
     if (s->palette != settings.palette % NPALETTES) {        /* (the menu's colour, kept as Felucca keeps its own) */
         settings.palette = s->palette;
@@ -190,6 +267,8 @@ static void ff_splash(void)
         line[k++] = *v;
     line[k] = 0;
     draw_text_line(0, y0 + FF_LOGO_SIZE + 14u, 240, &AF_S, line, 0xA535u, FF_LOGO_BG, 1);   /* (grey, 160 165 170) */
+    draw_text_line(0, y0 + FF_LOGO_SIZE + 32u, 240, &AF_S, "for Youri", 0x6B4Du, FF_LOGO_BG, 1);   /* (the film that
+                                                                                                * opens with it) */
     lcd_sync();
 }
 
@@ -215,6 +294,7 @@ static void ff_init(void)
     song.master_q12 = 2048;
     ff_player_init(&ff_pl, (float)FS);
     ff_settings_load();
+    ff_progress_load();
     ff_pl.s.palette = (uint8_t)(settings.palette % NPALETTES);
     tr_init(&ff_reso, (float)FS);
     ff_set_sound(&ff_pl, ff_sound, 0);
@@ -266,7 +346,7 @@ static void ff_leds(void)
 {
     static const uint8_t PAGE_BTN[FU_PAGES] = {
         [FU_PG_HOME] = B_HOME, [FU_PG_SOUND] = B_EDIT, [FU_PG_PRACTICE] = B_SEQ, [FU_PG_PRACTICE2] = B_SEQ,
-        [FU_PG_VAR] = B_ARP, [FU_PG_MIX] = B_GLO, [FU_PG_MENU] = B_HOME, [FU_PG_FINGERS] = B_FX};
+        [FU_PG_PRACTICE3] = B_SEQ, [FU_PG_VAR] = B_ARP, [FU_PG_MIX] = B_GLO, [FU_PG_MENU] = B_HOME, [FU_PG_PIANO] = B_FX};
     static uint8_t ready;
     uint8_t nl[FM1_NCOL] = {0}, nd[FM1_NCOL] = {0};
     uint32_t k, c;
@@ -324,6 +404,10 @@ static void ff_frame(void)
     if (ff_dirty && !ff_pl.playing && now - ff_save_ms > 2000u) {
         ff_settings_save();
         ff_dirty = false;
+    }
+    if (ff_pl.progress_new && !ff_pl.playing) {              /* (stopped: the flash is the code's while playing) */
+        ff_pl.progress_new = 0;
+        ff_progress_save();
     }
     song.playing = ff_pl.playing;                            /* (PLAY's green LED, Felucca's meters) */
     ff_leds();

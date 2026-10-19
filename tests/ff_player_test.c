@@ -253,6 +253,82 @@ int main(void)
         else CHECK(over > step * 5 / 2 && over < step * 7 / 2, "LEGATO 100: three sixteenths' overlap (%ld of %ld)", over, step);
     }
 
+    /* 9. RHYTHM: dotted pairs keep the bar; the accent moves */
+    {
+        reset();
+        P.s.rounds = 1; P.s.rhythm = FF_RHY_LONG_SHORT; P.s.rubato = 0;
+        ff_play(&P, true);
+        run(2.0f);
+        ff_play(&P, false);
+        long t[8]; int k = 0;
+        for (int i = 0; i < nrec && k < 8; ++i) if (rec[i].on && rec[i].hand == 0) t[k++] = rec[i].t;
+        long a1 = t[1] - t[0], a2 = t[2] - t[1];
+        CHECK(k == 8 && a1 > a2 * 5 / 2 && a1 < a2 * 7 / 2, "LONG-SHORT: three to one (%ld, %ld)", a1, a2);
+        reset();
+        P.s.rhythm = FF_RHY_ACC3; P.s.rubato = 0; P.s.touch = 60;
+        ff_shown e2 = {6, 1, 67, 0, 0}, e0 = {4, 1, 64, 0, 0};          /* bar 1: the group 4..7, its 3rd and 1st */
+        P.s.rhythm = FF_RHY_ACC3;
+        int v3 = 0, v1 = 0;
+        ff_play(&P, true); run(0.8f); ff_play(&P, false);
+        for (int i = 0; i < nrec; ++i) if (rec[i].on && rec[i].hand == 0) { if (rec[i].note == 67 && !v3) v3 = rec[i].vel; if (rec[i].note == 64 && !v1) v1 = rec[i].vel; }
+        (void)e2; (void)e0;
+        CHECK(v3 > v1, "ACC 3: the group's third note the loudest (%d > %d)", v3, v1);
+    }
+    /* 10. CHORDS: each group of four as one chord on its first sixteenth */
+    {
+        reset();
+        P.s.chords = 1;
+        ff_shown c4[32];
+        int n = ff_notes_in(&P, 4, 8, c4, 32), at4 = 0, other = 0;
+        for (int i = 0; i < n; ++i) { if (c4[i].step == 4 && c4[i].len == 4) at4++; else other++; }
+        CHECK(at4 == 4 && other == 0, "CHORDS: bar 1's second group, E4 C4 G4 C5 at once (%d, %d)", at4, other);
+        int total = ff_notes_in(&P, 0, FF_BARS * 16, (ff_shown[1600]){0}, 1600);
+        CHECK(total > 600 && total < 1337, "CHORDS: the piece in %d notes", total);
+    }
+    /* 11. STYLE, TUNING, PITCH, the Roman numerals */
+    {
+        ff_settings s;
+        ff_defaults(&s);
+        ff_style_apply(&s, FF_STYLE_NOCTURNE);
+        CHECK(s.interp == FF_STYLE_NOCTURNE && s.bpm == 112 && s.pedal == FF_PED_WASH, "NOCTURNE: slow, washed");
+        s.tuning = FF_TUNE_EQUAL;
+        CHECK(ff_temper_ct(&s, 4) == 0.0f, "EQUAL: E at 0 cents");
+        s.tuning = FF_TUNE_WERCKMEISTER;
+        float c = ff_temper_ct(&s, 0), e = ff_temper_ct(&s, 4), a = ff_temper_ct(&s, 9);
+        CHECK(a == 0.0f && c > 11.0f && c < 12.5f && e > 1.5f && e < 2.5f, "WERCKMEISTER, tuned to A: C %+.1f E %+.1f", c, e);
+        s.pitch = FF_PITCH_430;
+        CHECK(ff_pitch_ct(&s) < -39.0f && ff_pitch_ct(&s) > -41.0f, "A = 430: %.1f cents", ff_pitch_ct(&s));
+        reset();
+        char rn[16];
+        ff_roman(&P, 1, rn, sizeof rn);
+        CHECK(!strcmp(rn, "I"), "bar 1: I (%s)", rn);
+        int shown = 0, sec = 0;
+        for (int b = 1; b <= FF_BARS; ++b) { ff_roman(&P, b, rn, sizeof rn); shown += rn[0] != 0; sec += strchr(rn, '/') != 0; }
+        CHECK(shown > 40 && sec > 3, "Roman numerals for %d bars, %d secondary", shown, sec);
+        ff_roman(&P, 6, rn, sizeof rn);
+        CHECK(!strcmp(rn, "V7/V"), "bar 6, D7: V7/V (%s)", rn);
+    }
+    /* 12. the progress: WAIT, a bar played clean keeps its speed; a wrong key counts against it */
+    {
+        reset();
+        P.s.rounds = 1; P.s.mode = FF_MODE_WAIT; P.s.you = FF_YOU_RIGHT; P.s.speed = 70; P.s.from = 1; P.s.to = 2;
+        ff_set_loop(&P, true);
+        ff_play(&P, true);
+        int guard = 0;
+        while (P.playing && guard++ < 4000 && P.loops < 1) {
+            run(0.02f);
+            if (P.waiting) {
+                if (P.want_step / 16 == 1 && P.miss[1] == 0) ff_key(&P, (P.want[0] + 1) % 12 + 60, true);   /* bar 2: one wrong */
+                for (int i = 0; P.waiting && i < 4; ++i) ff_key(&P, P.want[0], true);
+            }
+        }
+        ff_play(&P, false);
+        CHECK(P.best[0] == 70 && P.best[1] == 0 && P.miss[1] == 1, "bar 1 clean at 70%%, bar 2 one wrong key (%d %d %d)",
+              P.best[0], P.best[1], P.miss[1]);
+        ff_progress_erase(&P);
+        CHECK(P.best[0] == 0 && P.miss[1] == 0, "ERASE");
+    }
+
     printf("ff_player: %d checks, %d failed\n", checks, fails);
     return fails ? 1 : 0;
 }
