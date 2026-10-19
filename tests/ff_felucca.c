@@ -6,6 +6,7 @@
  *   tests/ff_felucca.sh OUTDIR [SECONDS]
  *   env SOUND=0..7 (the SOUND card), PEDAL=0..3, VARY=0..100 FIGURE=0..5 SEED, KEY, SCALE, BARS=from,to (a loop),
  *       NAME (the file: OUTDIR/flyfish_NAME.wav) */
+#define LIM_T 24000                            /* the master as Flyfish has it (fx.c) */
 #define main hostsim_main
 #include "hostsim.c"
 #undef main

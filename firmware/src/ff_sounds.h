@@ -47,7 +47,7 @@ static inline void ffs_track(track_t *t, const ff_settings *s, int k, int16_t ba
 {
     int lvl = k == FFS_KEYS ? 85 : 100;             /* (the hands' own levels: their velocities, ff_player.c) */
     t->p[P_VOICE] = V_POLY;
-    t->p[P_LEVEL] = ffs_clamp(lvl * 88 / 100);          /* (the loudest bars just under the master limiter) */
+    t->p[P_LEVEL] = ffs_clamp(lvl * 104 / 100);         /* (louder since 0.3: the loudest bars into the limiter) */
     t->p[P_REV] = ffs_clamp(s->reverb * 127 / 100);
     /* WIDTH: the bass left, the treble right (PAN is -64 .. 63, 0 the centre; WIDTH 100: 40 each side) */
     t->p[P_PAN] = (int16_t)((k == FFS_TREBLE ? 1 : k == FFS_BASS ? -1 : 0) * s->width * 40 / 100);

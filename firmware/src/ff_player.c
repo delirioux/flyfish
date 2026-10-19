@@ -232,7 +232,7 @@ static int velocity(const ff_settings *s, const ff_shown *e, bool recap)
 }
 
 /* a sixteenth's length in seconds: the tempo, the speed, the wave breathing (pushing up, a breath at the crest,
- * easing at the wave's end), the last two bars broadening, the fermata */
+ * easing at the wave's end), the last two bars broadening (a little less since 0.3), the fermata */
 static float step_dur(const ff_settings *s, int st)
 {
     float bpm = (float)s->bpm * (float)s->speed / 100.0f, d = 60.0f / bpm / 4.0f, R = (float)s->rubato / 100.0f;
@@ -244,10 +244,10 @@ static float step_dur(const ff_settings *s, int st)
     d *= 1.0f + R * shape;
     if (st >= 76 * 16 && st < FF_END - 16) {
         float x = (float)(st - 76 * 16) / 32.0f;
-        d *= 1.0f + (0.35f + 0.8f * R) * x * x;
+        d *= 1.0f + (0.28f + 0.6f * R) * x * x;
     }
     if (st >= FF_END - 16)
-        d *= 2.2f;
+        d *= 2.0f;
     return d;
 }
 
@@ -259,10 +259,13 @@ static int pedal_index(int st)
     return k;
 }
 
-/* when a note's damper falls: its own length, held on by the pedal to the next change (frames from now) */
+/* when a note's damper falls: its own length, held on by the pedal to the next change (frames from now). Chopin
+ * writes legato over the figures: each finger lets go only as the next key goes down, a quarter of a sixteenth
+ * later (an overlap, as a pianist's legato has; the held bass keeps its own length) */
+#define FF_LEGATO 1.25f
 static float release_after(const ff_settings *s, const ff_shown *e, float d)
 {
-    float own = (float)e->len * d * 0.97f;
+    float own = (float)e->len * d * (e->len < 8 ? FF_LEGATO : 0.97f);
     /* only the held bass keeps its key down to the pedal change: the figures let go at once and ring on in their
      * release (ff_sounds.h: the pedal's REL), so when Felucca's 8 voices run out it is a released figure that gives
      * way, never the bass (voice.c voice_victim: released voices first) */
