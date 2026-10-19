@@ -104,6 +104,8 @@ static void ff_settings_load(void)
             s.left = 65;
             s.reverb = 25;
         }
+        if (r.ver < 5 && s.touch == 70)                     /* 0.3: TOUCH 40, the dips less deep */
+            s.touch = 40;
         ff_settings_fix(&s);
         ff_pl.s = s;
     }
@@ -116,7 +118,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 4;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25) */
+    r.ver = 5;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25; 5: TOUCH 40) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif
