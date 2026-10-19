@@ -29,7 +29,7 @@ that music in a pocket synth, to play it, to learn it, to make it fall like wate
   next note: you are the rhythm) or WAIT (the music waits for the right note, any octave; the keys light up).
 - **Vary.** VARY 0 is the score note for note. Turn it up and half bars take a new figure on Chopin's own harmony:
   RISE, WAVE, ALBERTI, BROKEN, TREMOLO or SPARKLE, over one to four octaves, a seed for each. Move it to another
-  KEY, play it in MINOR, DORIAN or LYDIAN, change the BASS, and let FORM EVOLVE: a new variation every round.
+  KEY, play it in MINOR, DORIAN or LYDIAN, change the BASS, and let it go ROUNDS: 1 to 16 times or INF (endless), through a seam you will not hear (bar 48 runs into bar 1 as it runs into the recapitulation, which is bar 1 again); with VARY up, every round is a new variation.
 
 Eight sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
 SINE KEY; three spaces of reverb (CATHEDRAL at 20 % to start); ten colours.
@@ -49,7 +49,7 @@ SINE KEY; three spaces of reverb (CATHEDRAL at 20 % to start); ten colours.
 | HOME | the waterfall; hold it: the menu (colour, style) |
 | EDIT | sound: SOUND BRIGHT DECAY WIDTH |
 | SEQ | practice: SPEED FROM TO YOU; again: MODE RAMP CLICK COUNT |
-| ARP | variations: VARY FIGURE SPREAD SEED; again: KEY MODE BASS FORM |
+| ARP | variations: VARY FIGURE SPREAD SEED; again: KEY MODE BASS ROUNDS |
 | GLO | mix: RIGHT LEFT REVERB SPACE |
 | keys | music only: playing along, tapping, finding the note |
 

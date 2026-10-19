@@ -25,7 +25,7 @@ void ff_defaults(ff_settings *s)
     s->speed = 100; s->from = 1; s->to = 2; s->you = FF_YOU_NONE;
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;
     s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
-    s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->form = FF_FORM_ONCE;
+    s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->rounds = 0;   /* INF */
     s->right = 75; s->left = 100; s->reverb = 20; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0;
 }
@@ -43,7 +43,7 @@ void ff_settings_fix(ff_settings *s)
     s->vary = (uint8_t)clampi(s->vary, 0, 100); s->figure = (uint8_t)(s->figure % FF_FIG_COUNT);
     s->spread = (uint8_t)clampi(s->spread, 1, 4); s->key = (int8_t)clampi(s->key, -6, 6);
     s->scale = (uint8_t)(s->scale % FF_SCALE_COUNT); s->bass = (uint8_t)(s->bass % FF_BASS_COUNT);
-    s->form = (uint8_t)(s->form % FF_FORM_COUNT); s->right = (uint8_t)clampi(s->right, 0, 100);
+    s->rounds = (uint8_t)(s->rounds > FF_ROUNDS_MAX ? 0 : s->rounds); s->right = (uint8_t)clampi(s->right, 0, 100);
     s->left = (uint8_t)clampi(s->left, 0, 100); s->reverb = (uint8_t)clampi(s->reverb, 0, 100);
     s->space = (uint8_t)(s->space % FF_SPACE_COUNT); s->bpm = (uint8_t)clampi(s->bpm, 40, 240);
     s->palette = (uint8_t)(s->palette % 10u); s->style = (uint8_t)(s->style % 2u);
@@ -206,10 +206,15 @@ static float dyn_at(float bar)
     return .7f;
 }
 
-static int velocity(const ff_settings *s, const ff_shown *e)
+static int velocity(const ff_settings *s, const ff_shown *e, bool recap)
 {
     int ph = e->step % 32;
-    float v = dyn_at((float)e->step / 16.0f + 1.0f);
+    float bar = (float)e->step / 16.0f + 1.0f, v = dyn_at(bar);
+    if (recap && bar < 25.0f) {                        /* round again: the recapitulation's level (bar + 48), easing
+                                                        * back to the opening's by bar 25 */
+        float w = bar < 9.0f ? 1.0f : (25.0f - bar) / 16.0f;
+        v = v + (dyn_at(bar + 48.0f) - v) * w;
+    }
     if (e->hand == 0) {
         v += ph < 16 ? 0.09f * ((float)ph / 15.0f) : 0.09f * (1.0f - (float)(ph - 16) / 15.0f);   /* each wave */
         if (e->step % 4 == 0)
@@ -359,7 +364,7 @@ static void play_step(ff_player *p, int st, int skip_hand)
     for (int i = 0; i < n; ++i) {
         if (ev[i].hand == skip_hand)
             continue;
-        note_on(p, &ev[i], velocity(&p->s, &ev[i]), release_after(&p->s, &ev[i], d));
+        note_on(p, &ev[i], velocity(&p->s, &ev[i], p->recap), release_after(&p->s, &ev[i], d));
     }
     p->cur = st;
 }
@@ -373,7 +378,8 @@ static bool has_hand(const ff_player *p, int st, int hand)
     return false;
 }
 
-/* where the sixteenth after a step goes: the jump asked for, the loop, the end; -1 the end (FORM ONCE) */
+/* where the sixteenth after a step goes: the jump asked for, the practice loop, the seam (ROUNDS), the end; -1 the
+ * end of the last round */
 static int wrap(ff_player *p, int st)
 {
     if (p->jump && st % 16 == 0) {
@@ -397,16 +403,24 @@ static int wrap(ff_player *p, int st)
         }
         return (p->s.from - 1) * 16;
     }
-    if (st >= FF_END) {
-        if (p->s.form == FF_FORM_ONCE)
-            return -1;
-        if (p->s.form == FF_FORM_EVOLVE) {
+    if (st == FF_SEAM && (p->s.rounds == 0 || p->round < p->s.rounds)) {
+        char m[24] = "ROUND ";
+        int r = ++p->round, k = 6;
+        if (r >= 100) m[k++] = (char)('0' + r / 100 % 10);
+        if (r >= 10) m[k++] = (char)('0' + r / 10 % 10);
+        m[k++] = (char)('0' + r % 10);
+        m[k] = 0;
+        if (p->s.vary) {                               /* a new variation each round */
             p->s.seed = (uint8_t)(p->s.seed + 1u);
-            if (!p->s.vary) p->s.vary = 40;
             say(p, "NEW VARIATION");
+        } else {
+            say(p, m);
         }
+        p->recap = true;
         return 0;
     }
+    if (st >= FF_END)
+        return -1;
     return st;
 }
 
@@ -451,6 +465,8 @@ void ff_play(ff_player *p, bool on)
         p->wait = 0.0f;
         p->waiting = false;
         p->loops = 0;
+        p->round = 1;
+        p->recap = false;
         p->ended = false;
         p->jump = 0;
         p->cur = -1;
@@ -540,7 +556,7 @@ void ff_key(ff_player *p, int note, bool down)
                 int n = step_notes(&p->s, p->want_step, src, 16);
                 for (int j = 0; j < n; ++j)
                     if (src[j].note == e.note && src[j].hand == e.hand) e = src[j];
-                note_on(p, &e, velocity(&p->s, &e), release_after(&p->s, &e, d));
+                note_on(p, &e, velocity(&p->s, &e, p->recap), release_after(&p->s, &e, d));
                 hit++;
             } else {
                 p->want[k] = p->want[i];

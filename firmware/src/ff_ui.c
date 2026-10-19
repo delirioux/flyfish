@@ -87,7 +87,7 @@ static int32_t fu_icon_mid(int32_t x, int32_t cy, uint32_t size, uint32_t id, ui
 }
 
 /* ---- the cards ------------------------------------------------------------------------------------------- */
-enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_OCT, FC_SEED, FC_KEY, FC_SND, FC_PAL, FC_OFF };
+enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_OCT, FC_SEED, FC_KEY, FC_SND, FC_PAL, FC_ROUNDS, FC_OFF };
 typedef struct {
     const char *label;
     uint8_t off;                                   /* offsetof(ff_settings, the field) */
@@ -106,7 +106,6 @@ static const char *const FN_COUNT[] = {"OFF", "1 BAR"};
 static const char *const FN_FIGURE[] = {"RISE", "WAVE", "ALBERTI", "BROKEN", "TREMOLO", "SPARKLE"};
 static const char *const FN_SCALE[] = {"SCORE", "MINOR", "DORIAN", "LYDIAN"};
 static const char *const FN_BASS[] = {"OCTAVE", "SINGLE", "DRONE", "NONE"};
-static const char *const FN_FORM[] = {"ONCE", "REPEAT", "EVOLVE"};
 static const char *const FN_SPACE[] = {"ROOM", "HALL", "CHURCH"};           /* (the card: CATHEDRAL does not fit, as Tuna) */
 static const char *const FN_SPACE_LONG[] = {"ROOM", "HALL", "CATHEDRAL"};   /* (the MIX panel) */
 static const char *const FN_STYLE[] = {"FLAT", "LINE"};
@@ -124,7 +123,7 @@ static const fu_cdef FU_CARDS[FU_PAGES][4] = {
     [FU_PG_VAR] = {C_NUM("VARY", vary), C_LIST("FIGURE", figure, FN_FIGURE), {"SPREAD", FS_(spread), FC_OCT, 1, 4, 1, 0},
                    {"SEED", FS_(seed), FC_SEED, 0, 255, 1, 0}},
     [FU_PG_VAR2] = {{"KEY", FS_(key), FC_KEY, -6, 6, 1, 0}, C_LIST("MODE", scale, FN_SCALE), C_LIST("BASS", bass, FN_BASS),
-                    C_LIST("FORM", form, FN_FORM)},
+                    {"ROUNDS", FS_(rounds), FC_ROUNDS, 0, FF_ROUNDS_MAX, 1, 0}},
     [FU_PG_MIX] = {C_NUM("RIGHT", right), C_NUM("LEFT", left), C_NUM("REVERB", reverb), C_LIST("SPACE", space, FN_SPACE)},
     [FU_PG_MENU] = {{"COLOR", FS_(palette), FC_PAL, 0, 9, 1, 0}, C_LIST("STYLE", style, FN_STYLE), C_OFF, C_OFF},
 };
@@ -154,6 +153,7 @@ static void fu_card_value(const ff_ui *u, const fu_cdef *c, char *t, unsigned n)
     case FC_KEY: fu_cpy(t, ff_note_name(v), n); break;       /* the étude's C moved: its new tonic */
     case FC_SND: fu_cpy(t, ff_sound_name(v), n); break;
     case FC_PAL: fu_cpy(t, UI_PALETTES[fu_wrap(v, (int)NPALETTES)].name, n); break;
+    case FC_ROUNDS: if (v) fu_fmt_int(t, v); else fu_cpy(t, "INF", n); break;   /* (0 after 16: INF) */
     case FC_OFF: break;
     default: fu_fmt_int(t, v); break;
     }
@@ -167,7 +167,7 @@ static void fu_draw_card(ff_ui *u, int i, const fu_cdef *c)
     fu_card_value(u, c, val, sizeof val);
     int ratio = -1;
     if (c->kind != FC_OFF && (c->kind != FC_LIST || c->off == FS_(mode) || c->off == FS_(ramp)) && c->hi > c->lo)
-        ratio = (fu_get(u, c) - c->lo) * 1000 / (c->hi - c->lo);
+        ratio = c->kind == FC_ROUNDS && !fu_get(u, c) ? 1000 : (fu_get(u, c) - c->lo) * 1000 / (c->hi - c->lo);
     uint32_t sig = fu_hash(2166136261u + (uint32_t)i * 7u + ux.gen * 131u + (uint32_t)hot * 3u + (uint32_t)u->page * 977u,
                            c->label);
     sig = fu_hash(sig, val) + (uint32_t)(ratio + 1) * 31u;
@@ -663,7 +663,9 @@ void fu_knob(ff_ui *u, int k, int d)
         const fu_cdef *c = &FU_CARDS[u->page][k - FU_K1];
         if (c->kind == FC_OFF) return;
         int v = fu_get(u, c) + d * c->step;
-        if (c->kind == FC_SEED || c->kind == FC_SND || c->kind == FC_PAL || c->off == FS_(figure))
+        if (c->kind == FC_ROUNDS)                     /* 1 .. 16, then INF (0); turning down from 1: INF */
+            v = fu_wrap(v, FF_ROUNDS_MAX + 1);
+        else if (c->kind == FC_SEED || c->kind == FC_SND || c->kind == FC_PAL || c->off == FS_(figure))
             v = c->lo + fu_wrap(v - c->lo, c->hi - c->lo + 1);
         v = fu_clampi(v, c->lo, c->hi);
         fu_set(u, c, v);

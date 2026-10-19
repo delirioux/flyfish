@@ -10,7 +10,12 @@
  *               along; TAP: each key press plays the next note, the player is the rhythm; WAIT: the music waits
  *               for the right note, any octave), RAMP (each loop a little faster), CLICK, COUNT (a bar's count-in)
  *   VARIATIONS  VARY (0: the score note for note), FIGURE, SPREAD, SEED; KEY, MODE (minor, Dorian, Lydian), BASS,
- *               FORM (ONCE, REPEAT, EVOLVE: a new variation every round)
+ *               ROUNDS (how many times the piece goes round before it ends: 1 as written, up to 16, or INF)
+ *
+ * ROUNDS: bars 49 to 56 are bars 1 to 8 again (Chopin's recapitulation; only the bass of bar 49 lies an octave
+ * lower), so at the end of bar 48 the piece goes back to bar 1 and nothing gives the seam away: bar 48's dominant
+ * resolves into bar 1 exactly as it does into bar 49. Each round but the last goes back there; the last plays on to
+ * the end. With VARY above 0, every round brings the next seed: a new variation each time round.
  *
  * Dynamics, rubato and pedalling are Flyfish's own reading of the score's markings (f, cresc., dim., the
  * hairpins, the accents, Ped.): none of it comes from a recording. The variations take each half bar's own
@@ -31,7 +36,8 @@ enum { FF_MODE_FREE, FF_MODE_TAP, FF_MODE_WAIT, FF_MODE_COUNT };
 enum { FF_FIG_RISE, FF_FIG_WAVE, FF_FIG_ALBERTI, FF_FIG_BROKEN, FF_FIG_TREMOLO, FF_FIG_SPARKLE, FF_FIG_COUNT };
 enum { FF_SCALE_SCORE, FF_SCALE_MINOR, FF_SCALE_DORIAN, FF_SCALE_LYDIAN, FF_SCALE_COUNT };
 enum { FF_BASS_OCTAVE, FF_BASS_SINGLE, FF_BASS_DRONE, FF_BASS_NONE, FF_BASS_COUNT };
-enum { FF_FORM_ONCE, FF_FORM_REPEAT, FF_FORM_EVOLVE, FF_FORM_COUNT };
+#define FF_ROUNDS_MAX 16                           /* ROUNDS 1 .. 16; 0: INF, endless */
+#define FF_SEAM (48 * 16)                          /* the end of bar 48: back to bar 1 (see ROUNDS) */
 enum { FF_SPACE_ROOM, FF_SPACE_HALL, FF_SPACE_CATHEDRAL, FF_SPACE_COUNT };
 #define FF_SOUNDS 8
 
@@ -43,7 +49,7 @@ typedef struct {
     uint8_t mode, ramp, click, count;              /* PRACTICE 2 */
     uint8_t vary, figure, spread, seed;            /* VARIATIONS */
     int8_t key;                                    /* VARIATIONS 2: -6..6 */
-    uint8_t scale, bass, form;
+    uint8_t scale, bass, rounds;                   /* rounds: 0 INF, 1 .. 16 (was FORM until 0.3) */
     uint8_t right, left, reverb, space;            /* MIX */
     uint8_t bpm;                                   /* SELECT: 40..240 */
     uint8_t palette, style;                        /* MENU */
@@ -72,7 +78,9 @@ typedef struct {
     uint32_t clock;                                /* frames since start */
     int jump;                                      /* a bar asked for while playing (1..79; 0 none): at the next bar line */
     int loops;
-    bool ended;                                    /* FORM ONCE: the last bar played out */
+    bool ended;                                    /* the last round played out to the end */
+    int round;                                     /* 1 .. : the round playing (ROUNDS) */
+    bool recap;                                    /* a round after the first: bars 1 .. 16 take the recapitulation's dynamics */
     /* WAIT: the notes of the player's hand at step want_step, still to find */
     bool waiting;
     int want_step;

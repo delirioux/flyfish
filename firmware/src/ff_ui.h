@@ -15,7 +15,7 @@
  *   HOME       the waterfall; held: the menu (colour, style)
  *   EDIT       the sound              GLO   the mix and the space
  *   SEQ        practice, again: practice 2 (MODE RAMP CLICK COUNT)
- *   ARP        variations, again: variations 2 (KEY MODE BASS FORM)
+ *   ARP        variations, again: variations 2 (KEY MODE BASS ROUNDS: 1 .. 16 or INF, the seam at bar 48)
  *   FX SCL ENV LFO SAVE: not used (the settings save themselves while stopped) */
 #ifndef FF_UI_H
 #define FF_UI_H

@@ -97,6 +97,8 @@ static void ff_settings_load(void)
             s.space = FF_SPACE_CATHEDRAL;
             s.reverb = 20;
         }
+        if (r.ver < 3)                                       /* FORM became ROUNDS (0.3): INF, the default */
+            s.rounds = 0;
         ff_settings_fix(&s);
         ff_pl.s = s;
     }
@@ -109,7 +111,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 2;                                               /* (2: since 0.2, CATHEDRAL 20 the default) */
+    r.ver = 3;                                               /* (2: CATHEDRAL 20 the default; 3: ROUNDS for FORM) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif

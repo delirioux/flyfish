@@ -51,15 +51,17 @@ static int count_on(int hand) { int n = 0; for (int i = 0; i < nrec; ++i) n += r
 
 int main(void)
 {
-    /* 1. the score, as written */
+    /* 1. the score, as written: one round */
     reset();
+    CHECK(P.s.rounds == 0, "INF by default (%d)", P.s.rounds);
+    P.s.rounds = 1;
     ff_play(&P, true);
     float secs = 0;
     while (P.playing && secs < 400) { run(0.5f); secs += 0.5f; }
     run(4);
     int rh = 0, lh = 0;
     for (int i = 0; i < FF_NOTE_N; ++i) { if (FF_NOTES[i].nh >> 7) lh++; else rh++; }
-    CHECK(!P.playing && P.ended, "the performance ends (FORM ONCE)");
+    CHECK(!P.playing && P.ended, "the performance ends (ROUNDS 1)");
     CHECK(count_on(0) == rh, "right hand: %d notes, the score has %d", count_on(0), rh);
     CHECK(count_on(1) == lh, "left hand: %d notes, the score has %d", count_on(1), lh);
     {   /* in order, the score's pitches */
@@ -209,6 +211,52 @@ int main(void)
         int n = ff_reso_notes(&P, notes);
         CHECK(n >= 3, "the resonator has strings (%d)", n);
     }
+
+    /* 7. ROUNDS: two rounds are bars 1 .. 48, then 1 .. 79; the seam (bar 48 into bar 1) as bar 48 into bar 49 */
+    {
+        int pre = 0, all = 0, rh48 = 0;
+        for (int i = 0; i < FF_NOTE_N; ++i) { all++; if (FF_NOTES[i].step < 48 * 16) pre++; }
+        for (int i = 0; i < FF_NOTE_N; ++i) rh48 += FF_NOTES[i].step < 48 * 16 && !(FF_NOTES[i].nh >> 7);
+        reset();
+        P.s.rounds = 2;
+        ff_play(&P, true);
+        float t = 0;
+        while (P.playing && t < 600) { run(0.5f); t += 0.5f; }
+        CHECK(!P.playing && P.ended && P.round == 2, "ROUNDS 2 ends after two rounds (round %d)", P.round);
+        CHECK(count_on(0) + count_on(1) == pre + all, "ROUNDS 2: %d notes, bars 1-48 and the whole: %d",
+              count_on(0) + count_on(1), pre + all);
+        /* the right hand across the seam: bar 48's last notes, then bar 1's, as bar 48 into bar 49 */
+        int k = 0, seam = -1;
+        for (int i = 0; i < nrec; ++i) if (rec[i].on && rec[i].hand == 0) { if (k == rh48) { seam = i; break; } k++; }
+        int ok = seam > 0;
+        const int b1[4] = {64, 60, 67, 72}, b49ok = 1;
+        for (int j = 0, m = 0; ok && m < 4 && seam + j < nrec; ++j)
+            if (rec[seam + j].on && rec[seam + j].hand == 0) { ok &= rec[seam + j].note == b1[m]; m++; }
+        CHECK(ok && b49ok, "after bar 48 the right hand plays bar 1 (E4 C4 G4 C5)");
+        {
+            /* both hands: no onset gap around the seam longer than at the same place in the score (bar 48 into 49,
+             * where the left hand carries the line: the right hand rests over the bar line in both) */
+            long worst = 0;
+            int lo = seam, n = 0;
+            while (lo > 0 && n < 12) { --lo; n += rec[lo].on; }
+            long last = -1;
+            for (int i = lo, m = 0; i < nrec && m < 24; ++i) {
+                if (!rec[i].on) continue;
+                if (last >= 0 && rec[i].t - last > worst) worst = rec[i].t - last;
+                last = rec[i].t; m++;
+            }
+            CHECK(seam > 0 && worst < SR / 8, "the seam keeps the beat (largest onset gap %ld samples)", worst);
+        }
+        printf("ROUNDS 2: %.1f s\n", t);
+    }
+    reset();
+    P.s.rounds = 0;
+    P.s.vary = 30;
+    ff_play(&P, true);
+    run(300);
+    CHECK(P.playing && P.round >= 3, "INF: still playing after 300 s, round %d", P.round);
+    CHECK(P.s.seed == 17 + P.round - 1, "INF with VARY: a new seed each round (%d)", P.s.seed);
+    ff_play(&P, false);
 
     printf("ff_player: %d checks, %d failed\n", checks, fails);
     return fails ? 1 : 0;

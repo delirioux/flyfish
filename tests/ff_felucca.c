@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     P.s.decay = (uint8_t)env_int("DECAY", 60);
     P.s.reverb = (uint8_t)env_int("REVERB", 20);
     P.s.space = (uint8_t)env_int("SPACE", 2);
+    P.s.rounds = (uint8_t)env_int("ROUNDS", 1);       /* (the firmware's default is INF: a render ends) */
     if (getenv("BARS")) {
         int a = 1, b = 2;
         sscanf(getenv("BARS"), "%d,%d", &a, &b);
@@ -87,7 +88,9 @@ int main(int argc, char **argv)
     uint64_t mix_ns = 0;
     while (1) {
         int32_t o[2 * CTL];
+        int r0 = P.round;
         ff_process(&P, CTL);
+        if (P.round != r0) fprintf(stderr, "round %d at %.2f s\n", P.round, (double)f / FS);
         if (P.pedal_sig != reso_sig) {                    /* the pedal changed: the strings retune */
             int notes[6];
             int n = ff_reso_notes(&P, notes);
