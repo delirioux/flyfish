@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     P.s.rubato = (uint8_t)env_int("RUBATO", 35);
     P.s.bright = (uint8_t)env_int("BRIGHT", 60);
     P.s.decay = (uint8_t)env_int("DECAY", 60);
-    P.s.reverb = (uint8_t)env_int("REVERB", 20);
+    P.s.reverb = (uint8_t)env_int("REVERB", 25);
     P.s.space = (uint8_t)env_int("SPACE", 2);
     P.s.rounds = (uint8_t)env_int("ROUNDS", 1);
     P.s.legato = (uint8_t)env_int("LEGATO", 25);       /* (the firmware's default is INF: a render ends) */

@@ -32,7 +32,7 @@ that music in a pocket synth, to play it, to learn it, to make it fall like wate
   KEY, play it in MINOR, DORIAN or LYDIAN, change the BASS, and let it go ROUNDS: 1 to 16 times or INF (endless), through a seam you will not hear (bar 48 runs into bar 1 as it runs into the recapitulation, which is bar 1 again); with VARY up, every round is a new variation.
 
 Eight sounds on Felucca's engines: GRAND (a Steinway D, sampled), TINE EP, HARP, CELESTA, MUSIC BOX, KALIMBA, MARIMBA,
-SINE KEY; three spaces of reverb (CATHEDRAL at 20 % to start); ten colours.
+SINE KEY; three spaces of reverb (CATHEDRAL at 25 % to start); ten colours.
 
 ## The controls
 

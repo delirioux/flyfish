@@ -99,6 +99,11 @@ static void ff_settings_load(void)
         }
         if (r.ver < 3)                                       /* FORM became ROUNDS (0.3): INF, the default */
             s.rounds = 0;
+        if (r.ver < 4 && s.right == 75 && s.left == 100 && s.reverb == 20) {   /* 0.2's mix: 0.3's */
+            s.right = 65;
+            s.left = 65;
+            s.reverb = 25;
+        }
         ff_settings_fix(&s);
         ff_pl.s = s;
     }
@@ -111,7 +116,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 3;                                               /* (2: CATHEDRAL 20 the default; 3: ROUNDS for FORM) */
+    r.ver = 4;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif
