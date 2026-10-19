@@ -223,16 +223,11 @@ int main(int argc, char **argv)
     /* VARIATIONS */
     press(FU_B_ARP);
     CHECK(ui.page == FU_PG_VAR, "ARP: VARIATIONS");
-    fu_knob(&ui, FU_K1, 10);
-    CHECK(pl.s.vary == 50, "VARY 50 (%d)", pl.s.vary);
     run_ms(1000);
-    shot("variations");
-    all_palettes("variations");
-    press(FU_B_ARP);
     fu_knob(&ui, FU_K1, 2);
     fu_knob(&ui, FU_K2, 1);
-    shot("variations2");
-    all_palettes("variations2");
+    shot("variations");
+    all_palettes("variations");
     fu_knob(&ui, FU_K1, -2);
     fu_knob(&ui, FU_K2, -1);
     /* MIX */

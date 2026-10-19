@@ -35,12 +35,12 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
 | --- | --- |
 | `data/op10no1.txt` | the étude: 1,337 notes, one a line, readable and checkable bar by bar |
 | `tools/ff_etude.py` | the notes into `ff_etude.inc`: the notes, an index by sixteenth, the pedal changes, the resonator's strings, each wave's crest, each bar's chord |
-| `ff_player` | the performance: time, dynamics, rubato, pedal, the loop, WAIT and TAP, the variations, key and mode |
+| `ff_player` | the performance: time, dynamics, rubato, pedal, the loop, WAIT and TAP, key and mode, ROUNDS, LEGATO |
 | `ff_ui` | the screen and the controls, in Tuna's frame, on Felucca's `gfx.c` |
 | `ff_sounds.h` | the eight sounds on Felucca's engines, and how the cards set a track |
 | `ff_fw.c` | the glue: the ISR, the panel, the LEDs, the settings in flash, the splash |
 | `tools/ff_logo.py` | the splash logo into `ff_logo.inc` |
-| `tests/ff_player_test.c` | the player: every note once and in order, note-offs, the loop and ramp, WAIT, TAP, the variations, key, bass, pedal |
+| `tests/ff_player_test.c` | the player: every note once and in order, note-offs, the loop and ramp, WAIT, TAP, key, bass, pedal, ROUNDS, LEGATO |
 | `tests/ff_ui_test.c` | the screen: the controls, every page in every palette, Tuna's layout lint, PNGs and a GIF |
 | `tests/ff_felucca.c` | the étude through Felucca's real engines to a WAV: voices, the limiter, the resonator, the cost |
 
@@ -68,7 +68,7 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   the arpeggios sweep from left to right and back. WIDTH sets how far apart; RIGHT and LEFT are the hands'
   velocities. (Felucca's PAN is -64 .. 63 around 0: 0.1 and 0.2 put 64 and up in it, everything hard right.)
   The samples stay mono: stereo would take twice the flash.
-- **A deep bass.** The held bass well above the figures, RIGHT at 75 and LEFT at 100, its Steinway notes kept 3.1 s
+- **A deep bass.** The held bass well above the figures, (0.2: RIGHT at 75 and LEFT at 100; 0.3: both 65), its Steinway notes kept 3.1 s
   (a two-bar whole note at 176 lasts 2.7 s). Measured on the host render: the bass below 160 Hz 2 dB nearer the rest
   than in 0.2, sounding in 99 % of the quarter seconds (was 88 %); no note twice, no voice stolen.
 - **A Steinway.** GRAND is a Steinway D: Princeton's bitKlavier Grand (Piano Bar mic image, CC BY 4.0), 13 notes
@@ -77,8 +77,9 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   have died away anyway. 271 KB of ADPCM (Felucca's sets: 143 KB). Without Tuna's flute and sax, their indexes are
   aliases of the piano. The second layer (v8) is downloaded but not used: Felucca's SAMPLE engine has no velocity
   layers; the matrix's VEL -> AMP does the dynamics.
-- **The variations keep Chopin's harmony.** Each half bar's own notes give the pool; a figure walks it on the right
-  hand's rhythm. The random numbers are mulberry32, as in the browser simulator.
+- **Only Chopin's notes.** 0.1 .. 0.2 had VARY: generated right-hand figures on each half bar's notes. They did not
+  sound like Chopin and 0.3 removed them; KEY, MODE and BASS move or thin the score's own notes. The saved record
+  keeps their four bytes (`unused_vary`) so older settings still load.
 - **The keys only play.** FREE plays along, TAP makes the player the rhythm, WAIT holds the music for the right
   note (any octave, since the right hand reaches E7 and the keys stop at G5); the key LEDs show the note to find,
   else the right hand running across the keys.

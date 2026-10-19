@@ -87,7 +87,7 @@ static int32_t fu_icon_mid(int32_t x, int32_t cy, uint32_t size, uint32_t id, ui
 }
 
 /* ---- the cards ------------------------------------------------------------------------------------------- */
-enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_OCT, FC_SEED, FC_KEY, FC_SND, FC_PAL, FC_ROUNDS, FC_OFF };
+enum { FC_NUM, FC_LIST, FC_PCT, FC_BAR, FC_KEY, FC_SND, FC_PAL, FC_ROUNDS, FC_OFF };
 typedef struct {
     const char *label;
     uint8_t off;                                   /* offsetof(ff_settings, the field) */
@@ -103,7 +103,6 @@ static const char *const FN_MODE[] = {"FREE", "TAP", "WAIT"};
 static const char *const FN_RAMP[] = {"OFF", "+2%", "+5%", "+10%"};
 static const char *const FN_ONOFF[] = {"OFF", "ON"};
 static const char *const FN_COUNT[] = {"OFF", "1 BAR"};
-static const char *const FN_FIGURE[] = {"RISE", "WAVE", "ALBERTI", "BROKEN", "TREMOLO", "SPARKLE"};
 static const char *const FN_SCALE[] = {"SCORE", "MINOR", "DORIAN", "LYDIAN"};
 static const char *const FN_BASS[] = {"OCTAVE", "SINGLE", "DRONE", "NONE"};
 static const char *const FN_SPACE[] = {"ROOM", "HALL", "CHURCH"};           /* (the card: CATHEDRAL does not fit, as Tuna) */
@@ -120,16 +119,14 @@ static const fu_cdef FU_CARDS[FU_PAGES][4] = {
                         {"TO", FS_(to), FC_BAR, 1, 79, 1, 0}, C_LIST("YOU", you, FN_YOU)},
     [FU_PG_PRACTICE2] = {C_LIST("MODE", mode, FN_MODE), C_LIST("RAMP", ramp, FN_RAMP), C_LIST("CLICK", click, FN_ONOFF),
                          C_LIST("COUNT", count, FN_COUNT)},
-    [FU_PG_VAR] = {C_NUM("VARY", vary), C_LIST("FIGURE", figure, FN_FIGURE), {"SPREAD", FS_(spread), FC_OCT, 1, 4, 1, 0},
-                   {"SEED", FS_(seed), FC_SEED, 0, 255, 1, 0}},
-    [FU_PG_VAR2] = {{"KEY", FS_(key), FC_KEY, -6, 6, 1, 0}, C_LIST("MODE", scale, FN_SCALE), C_LIST("BASS", bass, FN_BASS),
+    [FU_PG_VAR] = {{"KEY", FS_(key), FC_KEY, -6, 6, 1, 0}, C_LIST("MODE", scale, FN_SCALE), C_LIST("BASS", bass, FN_BASS),
                     {"ROUNDS", FS_(rounds), FC_ROUNDS, 0, FF_ROUNDS_MAX, 1, 0}},
     [FU_PG_MIX] = {C_NUM("RIGHT", right), C_NUM("LEFT", left), C_NUM("REVERB", reverb), C_LIST("SPACE", space, FN_SPACE)},
     [FU_PG_FINGERS] = {C_NUM("LEGATO", legato), C_OFF, C_OFF, C_OFF},
     [FU_PG_MENU] = {{"COLOR", FS_(palette), FC_PAL, 0, 9, 1, 0}, C_LIST("STYLE", style, FN_STYLE), C_OFF, C_OFF},
 };
 static const char *const FU_PAGE_NAMES[FU_PAGES] = {"HOME", "SOUND", "PRACTICE", "PRACTICE 2", "VARIATIONS",
-                                                    "VARIATIONS 2", "MIX", "MENU", "FINGERS"};
+                                                    "MIX", "MENU", "FINGERS"};
 const char *fu_page_name(int page) { return page >= 0 && page < FU_PAGES ? FU_PAGE_NAMES[page] : ""; }
 
 static int fu_get(const ff_ui *u, const fu_cdef *c)
@@ -150,7 +147,6 @@ static void fu_card_value(const ff_ui *u, const fu_cdef *c, char *t, unsigned n)
     switch (c->kind) {
     case FC_LIST: fu_cpy(t, c->names[fu_clampi(v, c->lo, c->hi)], n); break;
     case FC_PCT: fu_fmt_int(t, v); fu_cat(t, "%", n); break;
-    case FC_OCT: fu_fmt_int(t, v); fu_cat(t, " OCT", n); break;
     case FC_KEY: fu_cpy(t, ff_note_name(v), n); break;       /* the étude's C moved: its new tonic */
     case FC_SND: fu_cpy(t, ff_sound_name(v), n); break;
     case FC_PAL: fu_cpy(t, UI_PALETTES[fu_wrap(v, (int)NPALETTES)].name, n); break;
@@ -260,19 +256,9 @@ static void fu_draw_foot(ff_ui *u)
     const ff_player *p = u->pl;
     int bar = ff_bar(p), filled = (bar - 1) * 16 / 79;
     char small[16], a[8];
-    if (u->page == FU_PG_VAR || u->page == FU_PG_VAR2) {
-        if (p->s.vary) {
-            fu_cpy(small, "VAR ", sizeof small);
-            fu_fmt_int(a, p->s.seed);
-            fu_cat(small, a, sizeof small);
-        } else {
-            fu_cpy(small, "SCORE", sizeof small);
-        }
-    } else {
-        fu_cpy(small, "BAR ", sizeof small);
-        fu_fmt_int(a, bar);
-        fu_cat(small, a, sizeof small);
-    }
+    fu_cpy(small, "BAR ", sizeof small);
+    fu_fmt_int(a, bar);
+    fu_cat(small, a, sizeof small);
     uint32_t sig = fu_hash(fu_hash((uint32_t)filled * 7u + (uint32_t)p->playing * 3u + ux.gen * 11u + (uint32_t)u->page * 13u,
                                    small), fu_page_name(u->page));
     if (!u->force && sig == u->sig_foot)
@@ -440,7 +426,7 @@ static void fu_panel_roll(ff_ui *u, bool var)
 #undef FU_Y
     if (p->playing && p->cur >= s0 && p->cur < s0 + steps)
         cv_rect(x0 + (p->cur - s0) * w / steps, top + 14, 1, h - 14, T_ACCENT);
-    if (u->page == FU_PG_VAR2 && (p->s.key || p->s.scale)) {
+    if (u->page == FU_PG_VAR && (p->s.key || p->s.scale)) {
         char t[24];
         t[0] = 0;
         if (p->s.key) { fu_cpy(t, "KEY ", sizeof t); fu_cat(t, ff_note_name(p->s.key), sizeof t); }
@@ -557,7 +543,7 @@ static void fu_draw_panel(ff_ui *u)
         }
         case FU_PG_PRACTICE: fu_panel_roll(u, false); break;
         case FU_PG_PRACTICE2: fu_panel_practice2(u); break;
-        case FU_PG_VAR: case FU_PG_VAR2: fu_panel_roll(u, true); break;
+        case FU_PG_VAR: fu_panel_roll(u, true); break;
         case FU_PG_MIX: fu_panel_space(u); break;
         case FU_PG_MENU: fu_panel_menu(u); break;
         }
@@ -666,7 +652,7 @@ void fu_knob(ff_ui *u, int k, int d)
         int v = fu_get(u, c) + d * c->step;
         if (c->kind == FC_ROUNDS)                     /* 1 .. 16, then INF (0); turning down from 1: INF */
             v = fu_wrap(v, FF_ROUNDS_MAX + 1);
-        else if (c->kind == FC_SEED || c->kind == FC_SND || c->kind == FC_PAL || c->off == FS_(figure))
+        else if (c->kind == FC_SND || c->kind == FC_PAL)
             v = c->lo + fu_wrap(v - c->lo, c->hi - c->lo + 1);
         v = fu_clampi(v, c->lo, c->hi);
         fu_set(u, c, v);
@@ -728,7 +714,7 @@ void fu_button(ff_ui *u, int b, bool down)
     case FU_B_GLO: fu_goto_page(u, FU_PG_MIX); break;
     case FU_B_FX: fu_goto_page(u, FU_PG_FINGERS); break;
     case FU_B_SEQ: fu_goto_page(u, u->page == FU_PG_PRACTICE ? FU_PG_PRACTICE2 : FU_PG_PRACTICE); break;
-    case FU_B_ARP: fu_goto_page(u, u->page == FU_PG_VAR ? FU_PG_VAR2 : FU_PG_VAR); break;
+    case FU_B_ARP: fu_goto_page(u, FU_PG_VAR); break;
     case FU_B_SAVE: fu_msg(u, p->playing ? "STOP TO SAVE" : "SAVED"); u->changed = true; break;
     default: fu_msg(u, "NOT USED"); break;
     }

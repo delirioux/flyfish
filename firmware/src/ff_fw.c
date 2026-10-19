@@ -264,7 +264,7 @@ static void ff_leds(void)
 {
     static const uint8_t PAGE_BTN[FU_PAGES] = {
         [FU_PG_HOME] = B_HOME, [FU_PG_SOUND] = B_EDIT, [FU_PG_PRACTICE] = B_SEQ, [FU_PG_PRACTICE2] = B_SEQ,
-        [FU_PG_VAR] = B_ARP, [FU_PG_VAR2] = B_ARP, [FU_PG_MIX] = B_GLO, [FU_PG_MENU] = B_HOME, [FU_PG_FINGERS] = B_FX};
+        [FU_PG_VAR] = B_ARP, [FU_PG_MIX] = B_GLO, [FU_PG_MENU] = B_HOME, [FU_PG_FINGERS] = B_FX};
     static uint8_t ready;
     uint8_t nl[FM1_NCOL] = {0}, nd[FM1_NCOL] = {0};
     uint32_t k, c;

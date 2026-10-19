@@ -15,7 +15,7 @@
  *   HOME       the waterfall; held: the menu (colour, style)
  *   EDIT       the sound              GLO   the mix and the space
  *   SEQ        practice, again: practice 2 (MODE RAMP CLICK COUNT)
- *   ARP        variations, again: variations 2 (KEY MODE BASS ROUNDS: 1 .. 16 or INF, the seam at bar 48)
+ *   ARP        variations: KEY MODE BASS ROUNDS (1 .. 16 or INF, the seam at bar 48)
  *   FX         fingers: LEGATO (how long each note of the figures overlaps the next)
  *   SCL ENV LFO SAVE: not used (the settings save themselves while stopped) */
 #ifndef FF_UI_H
@@ -34,7 +34,7 @@ enum {
     FU_B_HOME, FU_B_SAVE, FU_B_ARP, FU_B_SEQ, FU_B_PLAY, FU_B_REC,
     FU_B_OCTDN, FU_B_OCTUP, FU_BUTTONS
 };
-enum { FU_PG_HOME, FU_PG_SOUND, FU_PG_PRACTICE, FU_PG_PRACTICE2, FU_PG_VAR, FU_PG_VAR2, FU_PG_MIX, FU_PG_MENU, FU_PG_FINGERS, FU_PAGES };
+enum { FU_PG_HOME, FU_PG_SOUND, FU_PG_PRACTICE, FU_PG_PRACTICE2, FU_PG_VAR, FU_PG_MIX, FU_PG_MENU, FU_PG_FINGERS, FU_PAGES };
 #define FU_KEY_LO 53                      /* F3: the FM-1's lowest key */
 #define FU_KEY_HI 79                      /* G5 */
 #define FU_DROPS 64

@@ -59,9 +59,6 @@ int main(int argc, char **argv)
     ff_player_init(&P, (float)FS);
     P.s.sound = (uint8_t)env_int("SOUND", 0);
     P.s.pedal = (uint8_t)env_int("PEDAL", 0);
-    P.s.vary = (uint8_t)env_int("VARY", 0);
-    P.s.figure = (uint8_t)env_int("FIGURE", 1);
-    P.s.seed = (uint8_t)env_int("SEED", 17);
     P.s.key = (int8_t)env_int("KEY", 0);
     P.s.scale = (uint8_t)env_int("SCALE", 0);
     P.s.rubato = (uint8_t)env_int("RUBATO", 35);

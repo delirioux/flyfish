@@ -9,18 +9,17 @@
  *   PRACTICE    SPEED, a loop FROM..TO (REC), YOU (the hand left out for the player), MODE (FREE: the keys play
  *               along; TAP: each key press plays the next note, the player is the rhythm; WAIT: the music waits
  *               for the right note, any octave), RAMP (each loop a little faster), CLICK, COUNT (a bar's count-in)
- *   VARIATIONS  VARY (0: the score note for note), FIGURE, SPREAD, SEED; KEY, MODE (minor, Dorian, Lydian), BASS,
+ *   VARIATIONS  KEY, MODE (minor, Dorian, Lydian), BASS,
  *               ROUNDS (how many times the piece goes round before it ends: 1 as written, up to 16, or INF)
  *
  * ROUNDS: bars 49 to 56 are bars 1 to 8 again (Chopin's recapitulation; only the bass of bar 49 lies an octave
  * lower), so at the end of bar 48 the piece goes back to bar 1 and nothing gives the seam away: bar 48's dominant
  * resolves into bar 1 exactly as it does into bar 49. Each round but the last goes back there; the last plays on to
- * the end. With VARY above 0, every round brings the next seed: a new variation each time round.
+ * the end.
  *
  * Dynamics, rubato and pedalling are Flyfish's own reading of the score's markings (f, cresc., dim., the
- * hairpins, the accents, Ped.): none of it comes from a recording. The variations take each half bar's own
- * harmony and give the right hand a new figure on its rhythm; the same seed gives the same variation (the
- * random numbers are mulberry32, as the browser simulator's, so both play the same notes).
+ * hairpins, the accents, Ped.): none of it comes from a recording. The notes are always Chopin's: VARIATIONS move
+ * them (KEY, MODE) or thin the bass, never invent new ones (0.3 removed VARY's generated figures).
  *
  * No libm, no doubles: floats on the FPU, and the five functions of tuna_libm.c at most. */
 #ifndef FF_PLAYER_H
@@ -33,7 +32,6 @@ enum { FF_HAND_R, FF_HAND_L, FF_HAND_KEYS, FF_HAND_CLICK };
 enum { FF_PED_SCORE, FF_PED_HALF, FF_PED_DRY, FF_PED_WASH, FF_PED_COUNT };
 enum { FF_YOU_NONE, FF_YOU_RIGHT, FF_YOU_LEFT, FF_YOU_COUNT };
 enum { FF_MODE_FREE, FF_MODE_TAP, FF_MODE_WAIT, FF_MODE_COUNT };
-enum { FF_FIG_RISE, FF_FIG_WAVE, FF_FIG_ALBERTI, FF_FIG_BROKEN, FF_FIG_TREMOLO, FF_FIG_SPARKLE, FF_FIG_COUNT };
 enum { FF_SCALE_SCORE, FF_SCALE_MINOR, FF_SCALE_DORIAN, FF_SCALE_LYDIAN, FF_SCALE_COUNT };
 enum { FF_BASS_OCTAVE, FF_BASS_SINGLE, FF_BASS_DRONE, FF_BASS_NONE, FF_BASS_COUNT };
 #define FF_ROUNDS_MAX 16                           /* ROUNDS 1 .. 16; 0: INF, endless */
@@ -47,7 +45,7 @@ typedef struct {
     uint8_t sound, bright, decay, width;           /* SOUND */
     uint8_t speed, from, to, you;                  /* PRACTICE: speed 25..100 %, bars 1..79 */
     uint8_t mode, ramp, click, count;              /* PRACTICE 2 */
-    uint8_t vary, figure, spread, seed;            /* VARIATIONS */
+    uint8_t unused_vary[4];                        /* VARY FIGURE SPREAD SEED until 0.3: the saved record's layout */
     int8_t key;                                    /* VARIATIONS 2: -6..6 */
     uint8_t scale, bass, rounds;                   /* rounds: 0 INF, 1 .. 16 (was FORM until 0.3) */
     uint8_t right, left, reverb, space;            /* MIX */

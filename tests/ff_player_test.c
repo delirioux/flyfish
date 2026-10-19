@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* FLYFISH player on the host: the whole étude through ff_process, counted and checked.
  *   tests/ff_tests.sh builds and runs it (exit 0: all passed)
- * Checks: every note of the score sounds once and in order (VARY 0), each note-on has its note-off, the length of
- * a performance, the loop and its ramp, WAIT with the right and wrong keys, TAP, the variations (in the half bar's
- * harmony, the same seed the same notes, VARY 0 the score), the key and the modes, the bass options, the pedal. */
+ * Checks: every note of the score sounds once and in order, each note-on has its note-off, the length of a
+ * performance, the loop and its ramp, WAIT with the right and wrong keys, TAP, the key and the modes, the bass
+ * options, the pedal, ROUNDS and its seam, LEGATO. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -130,41 +130,18 @@ int main(void)
     for (int i = 0; i < 6; ++i) { ff_key(&P, 60, true); ff_key(&P, 60, false); run(0.1f); }
     CHECK(P.pos == 6, "six taps, six sixteenths (%d)", P.pos);
 
-    /* 5. the variations */
+    /* 5. the notes are Chopin's: every note shown is a note of the score */
     reset();
-    ff_shown a[600], b[600], c[600];
+    ff_shown a[600], c[600];
     int na = ff_notes_in(&P, 0, 16 * 16, a, 600);
-    P.s.vary = 100; P.s.figure = FF_FIG_WAVE; P.s.seed = 5;
-    int nb = ff_notes_in(&P, 0, 16 * 16, b, 600);
-    int nc = ff_notes_in(&P, 0, 16 * 16, c, 600);
-    CHECK(nb == nc && !memcmp(b, c, sizeof(ff_shown) * (size_t)nb), "the same seed, the same notes");
     {
-        int varied = 0, out_of_harmony = 0;
-        for (int i = 0; i < nb; ++i) {
-            if (!b[i].var) continue;
-            varied++;
-            int hb = b[i].step / 8, ok = 0;
-            for (int k = FF_FIRST[hb * 8]; k < FF_FIRST[hb * 8 + 8]; ++k) ok |= (FF_NOTES[k].nh & 127) % 12 == b[i].note % 12;
-            out_of_harmony += !ok;
-        }
-        CHECK(varied > 100 && out_of_harmony == 0, "VARY 100: %d new notes, %d outside their half bar's harmony", varied, out_of_harmony);
-    }
-    {
-        int same = 1;
-        P.s.vary = 0;
-        int nd = ff_notes_in(&P, 0, 16 * 16, c, 600);
-        same = nd == na && !memcmp(a, c, sizeof(ff_shown) * (size_t)na);
-        CHECK(same, "VARY 0: the score");
-    }
-    for (int f = 0; f < FF_FIG_COUNT; ++f) {
-        P.s.vary = 100; P.s.figure = (uint8_t)f; P.s.spread = 4;
-        int n = ff_notes_in(&P, 0, FF_STEPS, c, 600);
-        int bad = 0;
-        for (int i = 0; i < n; ++i) bad += c[i].note < 12 || c[i].note > 120;
-        CHECK(n > 0 && !bad, "figure %d: %d notes, %d out of range", f, n, bad);
+        int k = 0, ok = 1;
+        for (int i = 0; i < FF_NOTE_N && FF_NOTES[i].step < 16 * 16; ++i) k++;
+        CHECK(na == k, "bars 1-16: the score's %d notes (%d)", k, na);
+        (void)ok;
     }
     /* the key and the mode */
-    P.s.vary = 0; P.s.figure = FF_FIG_WAVE; P.s.key = 2; P.s.scale = FF_SCALE_MINOR;
+    P.s.key = 2; P.s.scale = FF_SCALE_MINOR;
     ff_notes_in(&P, 0, 16, c, 600);
     {
         int r = 0;
@@ -251,11 +228,9 @@ int main(void)
     }
     reset();
     P.s.rounds = 0;
-    P.s.vary = 30;
     ff_play(&P, true);
     run(300);
     CHECK(P.playing && P.round >= 3, "INF: still playing after 300 s, round %d", P.round);
-    CHECK(P.s.seed == 17 + P.round - 1, "INF with VARY: a new seed each round (%d)", P.s.seed);
     ff_play(&P, false);
 
     /* 8. LEGATO: a figure's note lets go after the next one starts (25: a quarter of a sixteenth), at 0 as it does */

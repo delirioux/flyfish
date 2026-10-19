@@ -24,7 +24,6 @@ void ff_defaults(ff_settings *s)
     s->sound = 0; s->bright = 60; s->decay = 60; s->width = 70;
     s->speed = 100; s->from = 1; s->to = 2; s->you = FF_YOU_NONE;
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;
-    s->vary = 0; s->figure = FF_FIG_WAVE; s->spread = 3; s->seed = 17;
     s->key = 0; s->scale = FF_SCALE_SCORE; s->bass = FF_BASS_OCTAVE; s->rounds = 0;   /* INF */
     s->right = 65; s->left = 65; s->reverb = 25; s->space = FF_SPACE_CATHEDRAL;
     s->bpm = 176; s->palette = 3; s->style = 0; s->legato = 25;
@@ -40,8 +39,7 @@ void ff_settings_fix(ff_settings *s)
     s->to = (uint8_t)clampi(s->to, s->from, FF_BARS); s->you = (uint8_t)(s->you % FF_YOU_COUNT);
     s->mode = (uint8_t)(s->mode % FF_MODE_COUNT); s->ramp = (uint8_t)(s->ramp % 4u);
     s->click = (uint8_t)(s->click % 2u); s->count = (uint8_t)(s->count % 2u);
-    s->vary = (uint8_t)clampi(s->vary, 0, 100); s->figure = (uint8_t)(s->figure % FF_FIG_COUNT);
-    s->spread = (uint8_t)clampi(s->spread, 1, 4); s->key = (int8_t)clampi(s->key, -6, 6);
+    s->key = (int8_t)clampi(s->key, -6, 6);
     s->scale = (uint8_t)(s->scale % FF_SCALE_COUNT); s->bass = (uint8_t)(s->bass % FF_BASS_COUNT);
     s->rounds = (uint8_t)(s->rounds > FF_ROUNDS_MAX ? 0 : s->rounds); s->right = (uint8_t)clampi(s->right, 0, 100);
     s->left = (uint8_t)clampi(s->left, 0, 100); s->reverb = (uint8_t)clampi(s->reverb, 0, 100);
@@ -50,28 +48,9 @@ void ff_settings_fix(ff_settings *s)
     s->legato = (uint8_t)clampi(s->legato, 0, 100);
 }
 
-/* ---- random numbers: mulberry32 (the browser simulator's generator too) ------------------------------------------------- */
-typedef struct { uint32_t a; } ff_rng;
-static float rng_next(ff_rng *r)
-{
-    r->a += 0x6D2B79F5u;
-    uint32_t t = r->a;
-    t = (t ^ (t >> 15)) * (t | 1u);
-    t ^= t + (t ^ (t >> 7)) * (t | 61u);
-    return (float)((t ^ (t >> 14)) >> 8) * (1.0f / 16777216.0f);   /* (24 bits: exact in a float) */
-}
-
 /* ---- the notes as they play now ------------------------------------------------------------------------------ */
 static inline int n_note(const ff_note *n) { return n->nh & 127; }
 static inline int n_hand(const ff_note *n) { return n->nh >> 7; }
-
-static bool half_varied(const ff_settings *s, int hb)
-{
-    if (!s->vary)
-        return false;
-    ff_rng r = {(uint32_t)s->seed * 7919u + (uint32_t)hb * 104729u};
-    return rng_next(&r) < (float)s->vary / 100.0f;
-}
 
 static int map_mode(const ff_settings *s, int n)
 {
@@ -85,59 +64,10 @@ static int map_mode(const ff_settings *s, int n)
     return n - pc + to + s->key;
 }
 
-/* a varied half bar's right hand: the same rhythm, a new figure on the half bar's own harmony */
-static int varied_rh(const ff_settings *s, int hb, ff_shown *out, int max)
-{
-    int a = FF_FIRST[hb * 8], b = FF_FIRST[hb * 8 + 8 > FF_STEPS ? FF_STEPS : hb * 8 + 8];
-    int np = 0, rh[16], m = 0, pool[64], P = 0;
-    uint16_t seen = 0;
-    for (int i = a; i < b; ++i) {
-        int pc = n_note(&FF_NOTES[i]) % 12;
-        if (!(seen >> pc & 1u)) { seen |= (uint16_t)(1u << pc); }
-        if (n_hand(&FF_NOTES[i]) == 0 && m < 16)
-            rh[m++] = i;
-    }
-    for (int pc = 0; pc < 12; ++pc)
-        np += seen >> pc & 1u;
-    for (int k = 60; k <= 60 + 12 * s->spread && P < 64; ++k)
-        if (seen >> (k % 12) & 1u)
-            pool[P++] = k;
-    int n = 0;
-    if (P < 2) {
-        for (int i = 0; i < m && n < max; ++i, ++n) {
-            const ff_note *x = &FF_NOTES[rh[i]];
-            out[n] = (ff_shown){x->step, x->len, (uint8_t)n_note(x), 0, 0};
-        }
-        return n;
-    }
-    ff_rng r = {(uint32_t)s->seed * 31u + (uint32_t)hb * 977u};
-    for (int i = 0; i < m && n < max; ++i) {
-        const ff_note *x = &FF_NOTES[rh[i]];
-        float t = m > 1 ? (float)i / (float)(m - 1) : 0.0f;
-        bool down = (x->step / 16) % 2 == 1, skip = false;
-        int idx;
-        switch (s->figure) {
-        case FF_FIG_RISE: idx = (int)lrintf((down ? 1.0f - t : t) * (float)(P - 1)); break;
-        case FF_FIG_WAVE: { float u = t < 0.5f ? t * 2.0f : 2.0f - 2.0f * t; idx = (int)lrintf(u * (float)(P - 1)); break; }
-        case FF_FIG_ALBERTI: { static const int pat[4] = {0, 2, 1, 2}; idx = ((i / 4) % s->spread) * np + pat[i % 4]; break; }
-        case FF_FIG_BROKEN: { int j = i / 2 + (i % 2) * 2; float u = (float)j / (float)(m + 1);
-                              idx = (int)lrintf((down ? 1.0f - u : u) * (float)(P - 1)); break; }
-        case FF_FIG_TREMOLO: { int lo = P / 2 - 1, w = np < P - P / 2 ? np : P - P / 2; idx = lo + (i % 2) * w; break; }
-        default: idx = (int)((float)P / 2.0f + rng_next(&r) * ((float)P / 2.0f)); skip = rng_next(&r) < 0.22f; break;
-        }
-        idx = clampi(idx, 0, P - 1);
-        if (!skip)
-            out[n++] = (ff_shown){x->step, x->len, (uint8_t)pool[idx], 0, 1};
-    }
-    return n;
-}
-
 /* the notes starting at sixteenth s as they play now: up to max, in out */
 static int step_notes(const ff_settings *s, int st, ff_shown *out, int max)
 {
     int n = 0, a = FF_FIRST[st], b = FF_FIRST[st + 1];
-    int hb = st / 8;
-    bool var = half_varied(s, hb);
     int lowest = 128, nheld = 0;
     for (int i = a; i < b; ++i)
         if (n_hand(&FF_NOTES[i]) == 1 && FF_NOTES[i].len >= 8) {
@@ -147,23 +77,12 @@ static int step_notes(const ff_settings *s, int st, ff_shown *out, int max)
     for (int i = a; i < b && n < max; ++i) {
         const ff_note *x = &FF_NOTES[i];
         int h = n_hand(x), note = n_note(x);
-        if (h == 0 && var)
-            continue;
         if (h == 1 && x->len >= 8) {
             if (s->bass == FF_BASS_NONE) continue;
             if (s->bass == FF_BASS_SINGLE && nheld > 1 && note == lowest) continue;
             if (s->bass == FF_BASS_DRONE) note = note == lowest ? 24 : 36;
         }
         out[n++] = (ff_shown){x->step, x->len, (uint8_t)clampi(map_mode(s, note), 12, 120), (uint8_t)h, 0};
-    }
-    if (var && n < max) {
-        ff_shown v[16];
-        int k = varied_rh(s, hb, v, 16);
-        for (int i = 0; i < k && n < max; ++i)
-            if (v[i].step == st) {
-                v[i].note = (uint8_t)clampi(map_mode(s, v[i].note), 12, 120);
-                out[n++] = v[i];
-            }
     }
     return n;
 }
@@ -415,12 +334,7 @@ static int wrap(ff_player *p, int st)
         if (r >= 10) m[k++] = (char)('0' + r / 10 % 10);
         m[k++] = (char)('0' + r % 10);
         m[k] = 0;
-        if (p->s.vary) {                               /* a new variation each round */
-            p->s.seed = (uint8_t)(p->s.seed + 1u);
-            say(p, "NEW VARIATION");
-        } else {
-            say(p, m);
-        }
+        say(p, m);
         p->recap = true;
         return 0;
     }
