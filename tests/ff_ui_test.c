@@ -253,7 +253,7 @@ int main(int argc, char **argv)
     CHECK(pl.s.interp == FF_STYLE_OWN, "LEGATO by hand: the STYLE is OWN");
     fu_knob(&ui, FU_K2, -1); fu_knob(&ui, FU_K3, -1); fu_knob(&ui, FU_K4, -1);
     ff_style_apply(&pl.s, FF_STYLE_OWN);
-    pl.s.bpm = 176; pl.s.rubato = 35; pl.s.legato = 25; pl.s.touch = 40; pl.s.accent = 50; pl.s.pedal = FF_PED_SCORE;
+    pl.s.bpm = 176; pl.s.rubato = 35; pl.s.legato = 25; pl.s.touch = 30; pl.s.accent = 50; pl.s.pedal = FF_PED_SCORE;
     /* VARIATIONS */
     press(FU_B_ARP);
     CHECK(ui.page == FU_PG_VAR, "ARP: VARIATIONS");

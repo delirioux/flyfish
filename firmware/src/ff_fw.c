@@ -148,6 +148,8 @@ static void ff_settings_load(void)
         }
         if (r.ver < 5 && s.touch == 70)                     /* 0.3: TOUCH 40, the dips less deep */
             s.touch = 40;
+        if (r.ver < 8 && s.touch == 40)                     /* 1.0.3: TOUCH 30, the dynamics a little narrower */
+            s.touch = 30;
         if (r.ver < 7 && s.width == 70)                     /* 1.0.1: WIDTH 5 (the arpeggios hopped sides at C4) */
             s.width = 5;
         if (r.ver == 5 && s.tuning)                          /* (0.4's first build had Werckmeister III at 1) */
@@ -188,7 +190,7 @@ static void ff_settings_save(void)
     memset(&r, 0, sizeof r);
     r.magic = FF_REC_MAGIC;
     r.size = (uint16_t)sizeof r.s;
-    r.ver = 7;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25; 5: TOUCH 40; 6: no Werckmeister; 7: WIDTH 5) */
+    r.ver = 8;                                               /* (2: CATHEDRAL 20; 3: ROUNDS for FORM; 4: RIGHT LEFT 65, REVERB 25; 5: TOUCH 40; 6: no Werckmeister; 7: WIDTH 5; 8: TOUCH 30) */
     r.s = ff_pl.s;
     st_save(OBJ_PROJECT0, &r, sizeof r);
 #endif

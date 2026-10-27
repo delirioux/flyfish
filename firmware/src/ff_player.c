@@ -20,7 +20,7 @@ const char *ff_sound_name(int i) { return SOUND_NAMES[((i % FF_SOUNDS) + FF_SOUN
 void ff_defaults(ff_settings *s)
 {
     memset(s, 0, sizeof *s);
-    s->rubato = 35; s->touch = 40; s->accent = 50; s->pedal = FF_PED_SCORE;
+    s->rubato = 35; s->touch = 30; s->accent = 50; s->pedal = FF_PED_SCORE;
     s->sound = 0; s->bright = 60; s->decay = 60; s->width = 5;
     s->speed = 100; s->from = 1; s->to = 2; s->you = FF_YOU_NONE;
     s->mode = FF_MODE_FREE; s->ramp = 0; s->click = 0; s->count = 0;

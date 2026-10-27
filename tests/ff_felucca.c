@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     P.s.space = (uint8_t)env_int("SPACE", 2);
     P.s.rounds = (uint8_t)env_int("ROUNDS", 1);
     P.s.legato = (uint8_t)env_int("LEGATO", 25);
-    P.s.touch = (uint8_t)env_int("TOUCH", 40);
+    P.s.touch = (uint8_t)env_int("TOUCH", 30);
     if (env_int("STYLE", 0)) ff_style_apply(&P.s, env_int("STYLE", 0));
     P.s.soft = (uint8_t)env_int("SOFT", 0);
     P.s.tuning = (uint8_t)env_int("TUNING", 0);
