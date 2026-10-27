@@ -329,6 +329,27 @@ int main(void)
         CHECK(P.best[0] == 0 && P.miss[1] == 0, "ERASE");
     }
 
+    /* 13. the clock wraps (2^32 frames: 27 h at 44.1 kHz): playing across it, every note-on still gets its note-off */
+    {
+        reset();
+        P.clock = 0xFFFFFFFFu - (uint32_t)(SR * 2.0f);   /* two seconds before the wrap */
+        P.s.rounds = 0;
+        ff_play(&P, true);
+        run(6.0f);
+        ff_play(&P, false);
+        int on = 0, off = 0;
+        for (int i = 0; i < nrec; ++i) { on += rec[i].on; off += !rec[i].on; }
+        CHECK(on > 40 && on == off && P.clock < 0x10000000u, "across the clock's wrap: %d on, %d off", on, off);
+        P.s.rounds = 0;
+        ff_play(&P, true);
+        P.round = 999;
+        P.pos = FF_SEAM;
+        P.wait = 0;
+        run(0.05f);
+        CHECK(!strcmp(P.msg, "ROUND 1000"), "the 1000th round says so (%s)", P.msg);
+        ff_play(&P, false);
+    }
+
     printf("ff_player: %d checks, %d failed\n", checks, fails);
     return fails ? 1 : 0;
 }

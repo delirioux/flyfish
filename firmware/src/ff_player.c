@@ -299,7 +299,7 @@ static void note_on(ff_player *p, const ff_shown *e, int vel, float hold_s)
     if (p->nheld >= FF_HELD) {                         /* full: the one to end soonest goes now */
         int k = 0;
         for (int i = 1; i < p->nheld; ++i)
-            if (p->held[i].off < p->held[k].off) k = i;
+            if ((int32_t)(p->held[i].off - p->held[k].off) < 0) k = i;   /* (as times: the clock wraps every 27 h) */
         off_now(p, k);
     }
     send(p, 1, e->hand, e->note, vel);
@@ -426,11 +426,11 @@ static int wrap(ff_player *p, int st)
         return (p->s.from - 1) * 16;
     }
     if (st == FF_SEAM && (p->s.rounds == 0 || p->round < p->s.rounds)) {
-        char m[24] = "ROUND ";
-        int r = ++p->round, k = 6;
-        if (r >= 100) m[k++] = (char)('0' + r / 100 % 10);
-        if (r >= 10) m[k++] = (char)('0' + r / 10 % 10);
-        m[k++] = (char)('0' + r % 10);
+        char m[24] = "ROUND ", d[12];
+        int r = ++p->round, k = 6, n = 0;
+        if (p->round > 999999) p->round = 1;           /* (INF for weeks: the number restarts, nothing overflows) */
+        do { d[n++] = (char)('0' + r % 10); r /= 10; } while (r && n < 11);
+        while (n) m[k++] = d[--n];
         m[k] = 0;
         say(p, m);
         p->recap = true;
