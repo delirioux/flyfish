@@ -4,6 +4,7 @@
 # artifact "flyfish-firmware" (Actions > the run > Artifacts). A push to main also makes the site on GitHub Pages
 # (web/ff_make_site.py): the start page and the web installer with the package; it needs Settings > Pages > Source:
 # GitHub Actions. A push to dev builds the package only: install it with the installer's "Install a test build".
+# On main, the release job tags a new FF_VERSION and makes its GitHub release (docs/RELEASE.md as the notes).
 # The host tests run first.
 name: Firmware
 
@@ -130,3 +131,34 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@v5
+
+  release:
+    # main with a version that has no release yet (after Daurade's): the tag vX.Y.Z on this commit and a GitHub
+    # release with the package and docs/RELEASE.md as its notes. The version is Flyfish's own: FF_VERSION in
+    # firmware/src/ff_version.h. A tag that already exists (pushed by hand) is never moved: it gets its release.
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: flyfish-firmware
+          path: dist
+      - name: Tag and release (once per version)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(sed -n 's/^#define FF_VERSION "\([^"]*\)".*/\1/p' firmware/src/ff_version.h)
+          [ -n "$V" ] || { echo "no FF_VERSION in firmware/src/ff_version.h"; exit 1; }
+          if gh release view "v$V" >/dev/null 2>&1; then
+            echo "v$V is already released: nothing to do"; exit 0
+          fi
+          PKG=$(ls dist/flyfish-*.fwsc | head -1)
+          if git ls-remote --exit-code --tags origin "refs/tags/v$V" >/dev/null; then
+            gh release create "v$V" "$PKG" --verify-tag --title "Flyfish $V" --notes-file docs/RELEASE.md
+          else
+            gh release create "v$V" "$PKG" --target "$GITHUB_SHA" --title "Flyfish $V" --notes-file docs/RELEASE.md
+          fi
