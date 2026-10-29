@@ -19,11 +19,11 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true            # firmware/engines: Felucca-Engines (MIT)
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -87,7 +87,7 @@ jobs:
           cp build/felucca.sym dist/debug/ && gzip -c build/felucca.dis > dist/debug/felucca.dis.gz
           ls -l dist dist/debug
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: flyfish-firmware
           path: dist/
@@ -112,7 +112,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: python3 web/ff_make_site.py build/felucca.fwsc "$([ "$GITHUB_REF_NAME" = main ] || echo "$GITHUB_REF_NAME-")${GITHUB_SHA::7}" _site
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: github.ref == 'refs/heads/main'
         with:
           path: _site
@@ -129,4 +129,4 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
