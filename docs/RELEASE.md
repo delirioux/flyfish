@@ -1,4 +1,4 @@
-# Flyfish 1.0.3
+# Flyfish 1.1
 
 Chopin's Étude Op. 10 No. 1, the "Waterfall", on the M-VAVE FM-1: played, shaped, practised and moved.
 
@@ -13,6 +13,9 @@ Chopin's Étude Op. 10 No. 1, the "Waterfall", on the M-VAVE FM-1: played, shape
 - The screen: the waterfall or a one-bar score, the harmony in Roman numerals.
 - MIDI out with the sustain and soft pedals, to play a real piano.
 - In the browser: the same firmware on Felucca's emulator.
+
+New in 1.1: newer FM-1 units, whose flash is a UC25HQ80 (JEDEC 0xB36014), now save their settings and practice
+chart; before, they ran from RAM only and lost everything at power-off (Felucca's fix for its issue #320).
 
 Since 1.0: WIDTH 5 by default (1.0.1), safe across the 27-hour clock wrap (1.0.2), TOUCH 30 by default (1.0.3).
 

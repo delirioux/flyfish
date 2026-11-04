@@ -68,6 +68,8 @@ resonator), `tuna_libm.c` and `tuna_sys.h`. Everything else is Felucca's, touche
   the arpeggios sweep from left to right and back. WIDTH sets how far apart; RIGHT and LEFT are the hands'
   velocities. (Felucca's PAN is -64 .. 63 around 0: 0.1 and 0.2 put 64 and up in it, everything hard right.)
   The samples stay mono: stereo would take twice the flash.
+- **Two flash chips (1.1).** Newer FM-1 units carry a UC25HQ80 (JEDEC 0xB36014) instead of the 0x856014 part;
+  `persist_boot` (project.c) accepts both, as Felucca does since its fix for issue #320. Any other ID: RAM-only, as before.
 - **WIDTH 5 by default (1.0.1).** The arpeggios cross middle C all the time, so with the two halves far apart every
   crossing hopped from one side to the other: on the FM-1 that wobble sounded like a honky-tonk. Two tracks cannot pan
   by pitch smoothly, so the halves stay close.
