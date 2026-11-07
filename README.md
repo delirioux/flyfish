@@ -13,7 +13,7 @@ and [Felucca](docs/FELUCCA.md).
 Because of the film *Youri*. It opens with this étude, and Flyfish began the evening after watching it: to have
 that music in a pocket synth, to play it, to learn it, to make it fall like water.
 
-> **Version 1.1.** Built for love of one piece, with no warranty. Felucca's or Tuna's installer, or the official V15,
+> **Version 1.1.1.** Built for love of one piece, with no warranty. Felucca's or Tuna's installer, or the official V15,
 > takes the FM-1 back.
 
 <p align="center"><img src="docs/flyfish-home.gif" alt="HOME: the étude falling as droplets" width="240"></p>

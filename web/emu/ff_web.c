@@ -328,8 +328,7 @@ static void web_ms(void)
     if (!web_booted || (int32_t)(fm1_ms - web_boot_ms) < 0)
         return;
     if (web_boot_ms) {                                    /* main.c: the splash goes, the loop starts */
-        web_boot_ms = 0;
-        kb_boot_hold = 0;
+        web_boot_ms = 0;                                  /* (main.c: Flyfish keeps Felucca's keyboard silent) */
         lcd_fill(0, 0, 240, 240, T_BG);
         web_last_frame = fm1_ms - 15u;
     }

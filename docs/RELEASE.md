@@ -1,4 +1,4 @@
-# Flyfish 1.1
+# Flyfish 1.1.1
 
 Chopin's Étude Op. 10 No. 1, the "Waterfall", on the M-VAVE FM-1: played, shaped, practised and moved.
 
@@ -16,6 +16,10 @@ Chopin's Étude Op. 10 No. 1, the "Waterfall", on the M-VAVE FM-1: played, shape
 
 New in 1.1: newer FM-1 units, whose flash is a UC25HQ80 (JEDEC 0xB36014), now save their settings and practice
 chart; before, they ran from RAM only and lost everything at power-off (Felucca's fix for its issue #320).
+
+New in 1.1.1: every key plays one note. Felucca's own keyboard was still on next to Flyfish's: each key also played
+its raw note on the first track and out on MIDI, an extra piano note on every tap in TAP and on every key in WAIT. It
+now stays silent.
 
 Since 1.0: WIDTH 5 by default (1.0.1), safe across the 27-hour clock wrap (1.0.2), TOUCH 30 by default (1.0.3).
 
