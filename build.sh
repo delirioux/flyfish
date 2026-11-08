@@ -8,6 +8,8 @@
 set -e
 cd "$(dirname "$0")"
 export JIELI_TOOLCHAIN="${JIELI_TOOLCHAIN:-$HOME/.jieli/toolchain}"
+# (the three SDK files the package needs, kept in vendor/jieli-ac79 in the SDK's layout, when they are there)
+[ -z "${AC79_SDK:-}" ] && [ -f vendor/jieli-ac79/cpu/wl82/tools/uboot.boot ] && AC79_SDK="$PWD/vendor/jieli-ac79"
 export AC79_SDK="${AC79_SDK:-$HOME/fw-AC79_AIoT_SDK}"
 PY="${PYTHON:-python3}"
 

@@ -34,8 +34,11 @@ jobs:
       - name: JieLi toolchain (clang 4.0.1 for pi32v2)
         run: sh tools/get_toolchain.sh
 
-      - name: JieLi AC79 SDK (three of its files go into the package)
+      - name: JieLi AC79 SDK (three of its files go into the package; kept in vendor/jieli-ac79, gitee refuses CI)
         run: |
+          if [ -f vendor/jieli-ac79/cpu/wl82/tools/uboot.boot ]; then
+            echo "the three SDK files are in vendor/jieli-ac79: no download"; exit 0
+          fi
           git clone --depth 1 --branch AC79NN_SDK_V1.2.1_2023-12-13 \
               https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git "$HOME/fw-AC79_AIoT_SDK"
 
