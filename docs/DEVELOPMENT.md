@@ -11,7 +11,7 @@ Status: 18 October 2026. Version 0.1 written and tested on the host; not yet bui
 | --- | --- |
 | Home | GitHub, `github.com/delirioux/flyfish`, branch `main`; unfinished work on `dev` until it has run on the FM-1. |
 | Upstream | A fork of [Tuna](https://github.com/delirioux/tuna) (itself a fork of [Felucca](https://github.com/hugelton/Felucca)). Never push to Tuna or Felucca. Felucca's five engines are a submodule, `firmware/engines`. |
-| Name | Ocean animals, as Tuna and Espada: the flying fish, its arpeggios leaping across four octaves. The wordmark says FLYFISH; the piece is WATERFALL. |
+| Name | Ocean animals, as Tuna and [Espada](https://github.com/delirioux/makohai): the flying fish, its arpeggios leaping across four octaves. The wordmark says FLYFISH; the piece is WATERFALL. |
 | Language | English throughout: code, comments, commits, docs. |
 | Licence | GPL-3.0-only. Chopin's notes are public domain; only pitches and rhythms are used, nothing of anyone's MIDI performance or edition (velocities, tempo maps, pedalling): those are often CC BY-SA, which a GPL-3.0 release cannot carry. |
 | Commits | Author `delirioux <340923392+delirioux@users.noreply.github.com>`. Work done with Claude ends with the `Co-Authored-By` and `Claude-Session` lines. |
