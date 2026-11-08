@@ -1,3 +1,5 @@
+**Patched for FM-1 units with the new chipset.**
+
 # Flyfish
 
 <p align="center"><img src="docs/flyfish-logo.png" alt="Flyfish" width="256"></p>
