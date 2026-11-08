@@ -1,10 +1,10 @@
 {
-  "what": "One piece on the FM-1: Chopin's Etude in C major, Op. 10 No. 1, on a sampled Steinway D. Flyfish plays it, and lets you shape it, practise it and move it.",
+  "what": "One piece on the FM-1: Chopin's Etude in C major, Op. 10 No. 1, on a sampled Steinway D. Flyfish plays it and lets you shape it, practise it and move it.",
   "author": "delirioux",
   "kinds": [
     "other"
   ],
   "play": "https://delirioux.github.io/flyfish/try/",
   "image": "docs/card.png",
-  "color": "#3A9BE8"
+  "color": "#3FA2E6"
 }
