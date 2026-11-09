@@ -165,7 +165,7 @@ $("go").addEventListener("click", async () => {
   lock(false);
 });
 
-// a test build: a package of Felucca's own loader (FELUCCA-LOADER-1) for the FM-1 (FM-1_9xx), as the site's is
+// a test build: a package of Felucca's own loader (FELUCCA-LOADER-1) for the FM-1 (Flyfish's identity, FM-1_47359347), as the site's is
 const hasMark = (pkg, text) => {
   const m = new TextEncoder().encode(text);
   outer: for (let i = 0; i + m.length <= pkg.length; i++) {
@@ -182,7 +182,7 @@ $("test-file").addEventListener("change", async () => {
     const pkg = new Uint8Array(await file.arrayBuffer());
     if (epoch !== testEpoch) return;
     const product = productOf(pkg);
-    if (!/^FM-1_9[0-9][0-9]$/.test(product) || !hasMark(pkg, "FELUCCA-LOADER-1")) {
+    if (!/^FM-1_(9[0-9][0-9]|47[0-9]{6})$/.test(product) || !hasMark(pkg, "FELUCCA-LOADER-1")) {
       say("Not a Flyfish (or Felucca) package for the FM-1.");
       return;
     }
