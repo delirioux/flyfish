@@ -83,8 +83,9 @@ CREDITS, a short list of these authors, licences and source URLs.
 
 A `.fwsc` package made by `tools/build.py` (with `tools/fm1pkg_make.py`; this is the package the
 web installer installs) holds three unmodified files from the JieLi AC79 SDK
-(<https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK>, `cpu/wl82/tools/`). They are read from your SDK
-checkout at build time (see BUILDING.md); no SDK files are in this tree.
+(<https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK>, `cpu/wl82/tools/`). They are kept unchanged in
+`vendor/jieli-ac79`, in the SDK's own layout, so a build needs no SDK download; `AC79_SDK` can point at a full SDK
+checkout instead (see BUILDING.md).
 
 | File in the package | What it is |
 | --- | --- |
