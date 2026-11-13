@@ -7,5 +7,6 @@
   "play": "https://delirioux.github.io/flyfish/try/",
   "cheat": "https://github.com/delirioux/flyfish/blob/main/docs/CHEATSHEET.md",
   "image": "docs/card.png",
-  "color": "#3FA2E6"
+  "color": "#3FA2E6",
+  "sounds": "licensed: bitKlavier Grand Sample Library (Steinway D) by Daniel Trueman, Princeton University, CC BY 4.0; drums synthesized by Felucca's tools/gen_waves.py (Hügelton Sample Pack, GPL-3.0-only)"
 }
