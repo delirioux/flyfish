@@ -114,3 +114,5 @@ GPL-3.0-only. Flyfish by delirioux, written with Claude; a fork of Tuna (delirio
 Kuroshita, Hügelton Instruments; the web installer is Felucca's. Chopin's notes are in the public domain; the piano
 is a Steinway D from Princeton's bitKlavier Grand Sample Library by Daniel Trueman (CC BY 4.0). See
 [CREDITS.md](CREDITS.md) and [LICENSING.md](LICENSING.md).
+
+You can also try Flyfish in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).
